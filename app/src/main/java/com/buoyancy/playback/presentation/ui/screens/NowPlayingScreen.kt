@@ -14,9 +14,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,20 +21,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.buoyancy.playback.presentation.ui.theme.PlaybackTheme
+import com.buoyancy.playback.viewmodel.MusicPlayerViewModel
 
 @Composable
 fun NowPlayingScreen(
-    onPrevClick: () -> Unit,
-    onPlayClick: () -> Unit,
-    onNextClick: () -> Unit,
-    coverUri: MutableState<String>,
-    albumTitle: MutableState<String>,
-    playbackPosition: MutableState<String>,
-    trackLength: MutableState<String>,
+    viewModel: MusicPlayerViewModel,
     modifier: Modifier = Modifier
 ) {
     Surface(modifier = modifier.fillMaxWidth()) {
@@ -49,7 +39,7 @@ fun NowPlayingScreen(
         ) {
             // Картинка альбома
             AsyncImage(
-                model = coverUri.value,
+                model = viewModel.coverUri.value,
                 contentDescription = null,
                 modifier = Modifier
                     .size(240.dp)
@@ -62,7 +52,7 @@ fun NowPlayingScreen(
 
             // Название альбома
             Text(
-                text = albumTitle.value,
+                text = viewModel.currentTrackName.value,
                 style = MaterialTheme.typography.labelMedium,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
@@ -80,11 +70,11 @@ fun NowPlayingScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = playbackPosition.value,
+                    text = viewModel.playbackPosition.value,
                     style = MaterialTheme.typography.bodySmall
                 )
                 Text(
-                    text = trackLength.value,
+                    text = viewModel.trackLength.value,
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -97,7 +87,7 @@ fun NowPlayingScreen(
             ) {
                 // Кнопка "Предыдущий трек"
                 Button(
-                    onClick = onPrevClick,
+                    onClick = { viewModel.onPrevClick() },
                     modifier = Modifier.size(64.dp)
                 ) {
                     Text("⏮")
@@ -107,7 +97,7 @@ fun NowPlayingScreen(
 
                 // Кнопка "Пауза/Воспроизведение"
                 Button(
-                    onClick = onPlayClick,
+                    onClick = { viewModel.onPlayClick() },
                     modifier = Modifier.size(64.dp)
                 ) {
                     Text("⏯")
@@ -117,36 +107,12 @@ fun NowPlayingScreen(
 
                 // Кнопка "Следующий трек"
                 Button(
-                    onClick = onNextClick,
+                    onClick = { viewModel.onNextClick() },
                     modifier = Modifier.size(64.dp)
                 ) {
                     Text("⏭")
                 }
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun NowPlayingScreenPreview() {
-    PlaybackTheme {
-        NowPlayingScreen(
-            onPrevClick = {},
-            onPlayClick = {},
-            onNextClick = {},
-            coverUri = remember {
-                mutableStateOf("https://i.scdn.co/image/ab67616d0000b273b33fe1a513bdf356854a1fed")
-            },
-            albumTitle = remember {
-                mutableStateOf("Very Long Album Name That Should Be Truncated With Ellipsis")
-            },
-            playbackPosition =  remember {
-                mutableStateOf("01:12")
-            },
-            trackLength = remember {
-                mutableStateOf("02:58")
-            }
-        )
     }
 }

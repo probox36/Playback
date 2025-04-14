@@ -12,16 +12,10 @@ import com.spotify.android.appremote.api.Connector
 import com.spotify.android.appremote.api.PlayerApi
 import com.spotify.android.appremote.api.SpotifyAppRemote
 import com.spotify.protocol.client.Subscription
-import com.spotify.protocol.types.ImageUri
 import com.spotify.protocol.types.PlayerState
-import dagger.Module
-import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
 import javax.inject.Inject
 
-@Module
-@InstallIn(SingletonComponent::class)
 class SpotifyPlaybackController @Inject constructor(
     @ApplicationContext private val context: Context) {
 
