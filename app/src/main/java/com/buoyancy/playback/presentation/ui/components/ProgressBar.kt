@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 
@@ -36,6 +37,8 @@ fun ProgressBar(
     playbackPosition: MutableDoubleState,
     timePassed: MutableState<String>,
     trackDuration: MutableState<String>,
+    columnWidth: Dp = 300.dp,
+    axisHeight: Dp = 60.dp
 ) {
     val axisColor = Color(0xFF702A24)
     val middleLayerColor = Color(0xFF4C1D19)
@@ -44,9 +47,6 @@ fun ProgressBar(
     val axisPadding = 4.dp
     val middleLayerPadding = 3.dp
     val totalPadding = axisPadding + middleLayerPadding
-
-    val axisHeight = 50.dp
-    val columnWidth = 300.dp
     val cornerRadius = axisHeight / 2
 
     val availableWidth = columnWidth - 2 * totalPadding
@@ -59,7 +59,7 @@ fun ProgressBar(
         animatedWidth.animateTo(
             targetValue = targetWidth.value,
             animationSpec = tween(
-                durationMillis = 500,
+                durationMillis = 250,
                 easing = { AccelerateDecelerateInterpolator().getInterpolation(it) }
             )
         )
@@ -71,8 +71,8 @@ fun ProgressBar(
     ) {
         Box(
             modifier = Modifier
-                .width(columnWidth)
-                .size(height = axisHeight, width = columnWidth)
+                .fillMaxWidth()
+                .height(axisHeight)
                 .clip(RoundedCornerShape(cornerRadius))
                 .background(axisColor)
         ) {

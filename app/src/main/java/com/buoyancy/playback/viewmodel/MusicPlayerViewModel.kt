@@ -20,7 +20,9 @@ class MusicPlayerViewModel @Inject constructor(
     private val playbackController: SpotifyPlaybackController
 ): ViewModel() {
 
-    var currentTrackName = mutableStateOf("")
+    var trackName = mutableStateOf("")
+        private set
+    var artistName = mutableStateOf("")
         private set
     var timePassed = mutableStateOf("00:00")
         private set
@@ -49,14 +51,17 @@ class MusicPlayerViewModel @Inject constructor(
     }
 
     private fun processPlayerState(state: PlayerState) {
-        currentTrackName.value = state.track.name
+
+        val track = state.track
+        trackName.value = track.name
+        artistName.value = track.artist.name
         val msPassed = state.playbackPosition
-        val msDuration = state.track.duration
+        val msDuration = track.duration
         playbackPosition.doubleValue = msPassed.toDouble() / msDuration.toDouble()
         timePassed.value = formatDuration(msPassed)
         trackDuration.value = formatDuration(msDuration)
 
-        val newUri = state.track.imageUri.raw
+        val newUri = track.imageUri.raw
         if (newUri != null) {
             val newHash = newUri.substringAfterLast(":").trim('\'')
             if (newHash != coverHash) {
