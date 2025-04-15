@@ -1,6 +1,7 @@
 package com.buoyancy.playback.viewmodel
 
 import android.util.Log
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -21,11 +22,13 @@ class MusicPlayerViewModel @Inject constructor(
 
     var currentTrackName = mutableStateOf("")
         private set
-    var playbackPosition = mutableStateOf("00:00")
+    var timePassed = mutableStateOf("00:00")
         private set
-    var trackLength = mutableStateOf("00:00")
+    var trackDuration = mutableStateOf("00:00")
         private set
     var coverUri = mutableStateOf("")
+        private set
+    var playbackPosition = mutableDoubleStateOf(0.0)
         private set
 
     private val noConnectionMessage = "Playback controller not initialized. Re-trying connection..."
@@ -47,8 +50,11 @@ class MusicPlayerViewModel @Inject constructor(
 
     private fun processPlayerState(state: PlayerState) {
         currentTrackName.value = state.track.name
-        playbackPosition.value = formatDuration(state.playbackPosition)
-        trackLength.value = formatDuration(state.track.duration)
+        val msPassed = state.playbackPosition
+        val msDuration = state.track.duration
+        playbackPosition.doubleValue = msPassed.toDouble() / msDuration.toDouble()
+        timePassed.value = formatDuration(msPassed)
+        trackDuration.value = formatDuration(msDuration)
 
         val newUri = state.track.imageUri.raw
         if (newUri != null) {

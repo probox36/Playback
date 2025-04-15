@@ -1,6 +1,5 @@
 package com.buoyancy.playback.presentation.ui.screens
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,6 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.buoyancy.playback.presentation.ui.components.ProgressBar
 import com.buoyancy.playback.viewmodel.MusicPlayerViewModel
 
 @Composable
@@ -62,22 +62,7 @@ fun NowPlayingScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // Ряд с временными метками
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 40.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = viewModel.playbackPosition.value,
-                    style = MaterialTheme.typography.bodySmall
-                )
-                Text(
-                    text = viewModel.trackLength.value,
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
+            ProgressBar(viewModel.playbackPosition, viewModel.timePassed, viewModel.trackDuration)
 
             Spacer(Modifier.height(16.dp))
 
