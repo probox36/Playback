@@ -26,27 +26,42 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.buoyancy.playback.R
 import com.buoyancy.playback.viewmodel.MusicPlayerViewModel
+
+val lightThemeColor = Color(0xFFF0E1DE)
+const val trackNameFontWeight = 500
+const val artistNameFontWeight = 510
+val trackNameFontSize = 20.sp
+val artistNameFontSize = 16.sp
 
 @Composable
 fun MusicPlayerCard(
     viewModel: MusicPlayerViewModel,
+    modifier: Modifier = Modifier,
     contentWidth: Dp = 300.dp
 ) {
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .then(modifier)
     ) {
         // Основной контейнер карточки
         Box(
             modifier = Modifier
                 .widthIn(max = LocalConfiguration.current.screenWidthDp.dp - 20.dp)
-                .fillMaxHeight(0.75f)
+                .fillMaxHeight()
                 .clip(RoundedCornerShape(50))
         ) {
             // Размытый фон альбома
@@ -102,14 +117,35 @@ fun MusicPlayerCard(
     }
 }
 
+@OptIn(ExperimentalTextApi::class)
 @Composable
 private fun TrackInfo(viewModel: MusicPlayerViewModel, width: Dp = 300.dp) {
+
+    val unboundedFont = FontFamily(
+        Font(
+            R.font.unbounded_variable,
+            variationSettings = FontVariation.Settings(
+                FontVariation.weight(trackNameFontWeight)
+            )
+        )
+    )
+    val montserratFont = FontFamily(
+        Font(
+            R.font.montserrat_variable,
+            variationSettings = FontVariation.Settings(
+                FontVariation.weight(artistNameFontWeight)
+            )
+        )
+    )
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = viewModel.trackName.value,
-            style = MaterialTheme.typography.labelLarge,
             textAlign = TextAlign.Center,
             maxLines = 1,
+            fontFamily = unboundedFont,
+            fontSize = trackNameFontSize,
+            color = lightThemeColor,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.width(width)
         )
@@ -121,6 +157,9 @@ private fun TrackInfo(viewModel: MusicPlayerViewModel, width: Dp = 300.dp) {
             style = MaterialTheme.typography.labelMedium,
             textAlign = TextAlign.Center,
             maxLines = 1,
+            fontFamily = montserratFont,
+            fontSize = artistNameFontSize,
+            color = lightThemeColor,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.width(width)
         )

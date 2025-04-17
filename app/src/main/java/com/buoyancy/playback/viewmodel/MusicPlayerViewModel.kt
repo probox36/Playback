@@ -44,7 +44,7 @@ class MusicPlayerViewModel @Inject constructor(
         playbackController.subscribe { processPlayerState(it) }
     }
 
-    private fun triggerToast(message: String) {
+    fun triggerToast(message: String) {
         viewModelScope.launch {
             _toastEvent.emit(message)
         }
