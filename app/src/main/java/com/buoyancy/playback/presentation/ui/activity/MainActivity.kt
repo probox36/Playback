@@ -14,6 +14,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.buoyancy.playback.presentation.ui.screens.NowPlayingScreen
+import com.buoyancy.playback.presentation.ui.components.GestureInterceptor
 import com.buoyancy.playback.presentation.ui.theme.PlaybackTheme
 import com.buoyancy.playback.viewmodel.MusicPlayerViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -41,7 +42,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    NowPlayingScreen(playerViewModel)
+                    GestureInterceptor({ NowPlayingScreen(playerViewModel) }, playerViewModel)
                 }
             }
         }

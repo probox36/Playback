@@ -3,8 +3,8 @@ package com.buoyancy.playback.viewmodel
 import android.util.Log
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.buoyancy.playback.model.GestureHandlingViewModel
 import com.buoyancy.playback.service.SpotifyPlaybackController
 import com.buoyancy.playback.viewmodel.exceptions.NoConnectionToSpotifyException
 import com.spotify.protocol.types.PlayerState
@@ -18,7 +18,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MusicPlayerViewModel @Inject constructor(
     private val playbackController: SpotifyPlaybackController
-): ViewModel() {
+): GestureHandlingViewModel() {
 
     var trackName = mutableStateOf("")
         private set
@@ -107,4 +107,19 @@ class MusicPlayerViewModel @Inject constructor(
         return String.format("%02d:%02d", minutes, seconds)
     }
 
+    override fun onTap() {
+        Log.i("GestureInterceptor", "Single tap detected!")
+    }
+
+    override fun onDoubleTap() {
+        Log.i("GestureInterceptor", "Double tap detected!")
+    }
+
+    override fun onHorizontalDrag(dX: Float) {
+        Log.i("GestureInterceptor", "Horizontal drag: $dX")
+    }
+
+    override fun onVerticalDrag(dY: Float) {
+        Log.i("GestureInterceptor", "Vertical drag: $dY")
+    }
 }
