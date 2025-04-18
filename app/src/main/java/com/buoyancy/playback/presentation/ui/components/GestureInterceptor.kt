@@ -55,8 +55,13 @@ fun GestureInterceptor(
                         val dY = dragAmount.y
 
                         if (swipeType == null) {
-                            swipeType = if (abs(dX) > abs(dY))
-                                SwipeType.Horizontal else SwipeType.Vertical
+                            if (abs(dX) > abs(dY)) {
+                                swipeType = SwipeType.Horizontal
+                                viewModel.onHorizontalDragStart()
+                            } else {
+                                swipeType = SwipeType.Vertical
+                                viewModel.onVerticalDragStart()
+                            }
                         }
 
                         offsetX.floatValue += dX
@@ -69,6 +74,11 @@ fun GestureInterceptor(
                         }
                     },
                     onDragEnd = {
+                        when (swipeType) {
+                            SwipeType.Horizontal -> viewModel.onHorizontalDragEnd()
+                            SwipeType.Vertical -> viewModel.onVerticalDragEnd()
+                            null -> {}
+                        }
                         swipeType = null
                         offsetX.floatValue = 0f
                         offsetY.floatValue = 0f

@@ -45,6 +45,7 @@ fun ProgressBar(
     playbackPosition: MutableDoubleState,
     timePassed: MutableState<String>,
     trackDuration: MutableState<String>,
+    seeking: MutableState<Boolean>,
     columnWidth: Dp = 300.dp,
     axisHeight: Dp = 60.dp
 ) {
@@ -78,10 +79,14 @@ fun ProgressBar(
     val animatedWidth = remember { Animatable(availableHeight.value) }
     LaunchedEffect(playbackPosition.doubleValue) {
         val targetWidth = availableHeight + (availableWidth - availableHeight) * playbackPosition.doubleValue.toFloat()
-        animatedWidth.animateTo(
-            targetValue = targetWidth.value,
-            animationSpec = tween(250)
-        )
+        if (seeking.value) {
+            animatedWidth.snapTo(targetWidth.value)
+        } else {
+            animatedWidth.animateTo(
+                targetValue = targetWidth.value,
+                animationSpec = tween(250)
+            )
+        }
     }
 
     Column(modifier = Modifier.width(columnWidth)) {
@@ -178,6 +183,7 @@ fun ProgressBarPreview() {
     ProgressBar(
         playbackPosition = remember { mutableDoubleStateOf(0.75) },
         timePassed = remember { mutableStateOf("00:45") },
-        trackDuration = remember { mutableStateOf("01:00") }
+        trackDuration = remember { mutableStateOf("01:00") },
+        seeking = remember { mutableStateOf(false) }
     )
 }

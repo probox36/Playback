@@ -109,6 +109,7 @@ fun MusicPlayerCard(
                     viewModel.playbackPosition,
                     viewModel.timePassed,
                     viewModel.trackDuration,
+                    viewModel.seeking,
                     contentWidth
                 )
 

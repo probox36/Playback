@@ -70,11 +70,12 @@ class SpotifyPlaybackController @Inject constructor(
         this.notifySubscriber = listener
     }
 
-    private fun checkConnectionAndRun(action: () -> Unit) {
+
+    private fun <T> checkConnectionAndRun(action: () -> T): T {
         if (state == null)
             throw noConnectionException
         else
-            action()
+            return action()
     }
 
     private val monitorPlaybackStateTask = object : Runnable {
@@ -105,6 +106,9 @@ class SpotifyPlaybackController @Inject constructor(
         }
     }
 
+    fun seekTo(position: Long) { checkConnectionAndRun { player?.seekTo(position) } }
+    fun pause() { checkConnectionAndRun { player?.pause() } }
+    fun resume() { checkConnectionAndRun { player?.resume() } }
     fun next() { checkConnectionAndRun { player?.skipNext() } }
     fun previous() { checkConnectionAndRun { player?.skipPrevious() } }
 
