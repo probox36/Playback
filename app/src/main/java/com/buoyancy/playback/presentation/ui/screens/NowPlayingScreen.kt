@@ -14,6 +14,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import com.buoyancy.playback.presentation.ui.components.MusicPlayerCard
+import com.buoyancy.playback.presentation.ui.components.Options
+import com.buoyancy.playback.presentation.ui.presets.OptionPresets
 import com.buoyancy.playback.viewmodel.MusicPlayerViewModel
 
 @Composable
@@ -40,6 +42,12 @@ fun NowPlayingScreen(
         ) {
             MusicPlayerCard(viewModel)
         }
+
+        Options(
+            viewModel,
+            OptionPresets.nowPlayingOptions(),
+            OptionPresets.nowPlayingCallbacks( viewModel )
+        )
 
         // Обработка событий скролла
         LaunchedEffect(pagerState.currentPage) {

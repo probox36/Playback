@@ -2,6 +2,7 @@ package com.buoyancy.playback.viewmodel
 
 import android.util.Log
 import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
 import com.buoyancy.playback.model.GestureHandlingViewModel
@@ -15,6 +16,10 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+sealed class PlayerEvent {
+    data object VerticalDragEnded : PlayerEvent()
+}
 
 @HiltViewModel
 class MusicPlayerViewModel @Inject constructor(
@@ -34,6 +39,8 @@ class MusicPlayerViewModel @Inject constructor(
         private set
     var playbackPosition = mutableDoubleStateOf(0.0)
         private set
+    var yDrag = mutableFloatStateOf(0F)
+        private set
     var seeking = mutableStateOf(false)
         private set
 
@@ -47,12 +54,14 @@ class MusicPlayerViewModel @Inject constructor(
     companion object {
         private const val COVER_BASE_URL = "https://i.scdn.co/image/"
         private const val NO_CONNECTION_MSG = "Playback controller not initialized. Re-trying connection..."
-        private const val DRAG_SENSITIVITY = 500f
+        private const val DRAG_SENSITIVITY = 600f
     }
 
     // События
     private val _toastEvent = MutableSharedFlow<String>()
     val toastEvent: SharedFlow<String> = _toastEvent.asSharedFlow()
+    private val _playerEvents = MutableSharedFlow<PlayerEvent>()
+    val playerEvents: SharedFlow<PlayerEvent> = _playerEvents
 
     init {
         playbackController.subscribe(::processPlayerState)
@@ -82,14 +91,18 @@ class MusicPlayerViewModel @Inject constructor(
         }
     }
 
+    fun triggerToast(message: String) {
+        viewModelScope.launch {
+            _toastEvent.emit(message)
+        }
+    }
+
     private fun executePlaybackAction(action: () -> Unit) {
         try {
             action()
         } catch (e: NoConnectionToSpotifyException) {
-            viewModelScope.launch {
-                _toastEvent.emit(NO_CONNECTION_MSG)
-                playbackController.connect()
-            }
+            triggerToast(NO_CONNECTION_MSG)
+            playbackController.connect()
         }
     }
 
@@ -124,9 +137,17 @@ class MusicPlayerViewModel @Inject constructor(
         if (!wasPaused) playbackController.resume()
     }
 
-    override fun onVerticalDrag(dY: Float) { log("Vertical drag: $dY") }
     override fun onVerticalDragStart() { log("Vertical drag started") }
-    override fun onVerticalDragEnd() { log("Vertical drag ended") }
+    override fun onVerticalDrag(dY: Float) {
+        yDrag.floatValue = dY
+    }
+    override fun onVerticalDragEnd() {
+        log("Vertical drag ended")
+        yDrag.floatValue = 0F
+        viewModelScope.launch {
+            _playerEvents.emit(PlayerEvent.VerticalDragEnded)
+        }
+    }
 
     // Вспомогательные методы
     private fun absolutePlaybackPosition() = (savedTrackDuration * playbackPosition.doubleValue).toLong()

@@ -1,6 +1,8 @@
 package com.buoyancy.playback.presentation.ui.components
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -19,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableDoubleState
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -75,7 +78,7 @@ fun ProgressBar(
         )
     )
 
-    // Анимация прогресса
+    // Анимации
     val animatedWidth = remember { Animatable(availableHeight.value) }
     LaunchedEffect(playbackPosition.doubleValue) {
         val targetWidth = availableHeight + (availableWidth - availableHeight) * playbackPosition.doubleValue.toFloat()
@@ -88,6 +91,11 @@ fun ProgressBar(
             )
         }
     }
+
+    val animatedBorderRadius by animateIntAsState(
+        targetValue = if (seeking.value) 10 else 50,
+        animationSpec = tween(durationMillis = 135),
+    )
 
     Column(modifier = Modifier.width(columnWidth)) {
         // Основной контейнер прогресс-бара
@@ -125,7 +133,11 @@ fun ProgressBar(
                     modifier = Modifier
                         .padding(middleLayerPadding)
                         .size(height = availableHeight, width = animatedWidth.value.dp)
-                        .clip(RoundedCornerShape(cornerRadius - totalPadding))
+                        .clip(RoundedCornerShape(
+                            50,
+                            animatedBorderRadius,
+                            animatedBorderRadius,
+                            50))
                         .background(trackColor)
                         .wrapContentSize(Alignment.CenterStart, true)
                 ) {

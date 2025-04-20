@@ -41,7 +41,7 @@ import com.buoyancy.playback.viewmodel.MusicPlayerViewModel
 
 val lightThemeColor = Color(0xFFF0E1DE)
 const val trackNameFontWeight = 500
-const val artistNameFontWeight = 510
+const val artistNameFontWeight = 550
 val trackNameFontSize = 20.sp
 val artistNameFontSize = 16.sp
 
@@ -134,9 +134,9 @@ private fun TrackInfo(viewModel: MusicPlayerViewModel, width: Dp = 300.dp) {
             )
         )
     )
-    val montserratFont = FontFamily(
+    val manropeFont = FontFamily(
         Font(
-            R.font.montserrat_variable,
+            R.font.manrope_variable,
             variationSettings = FontVariation.Settings(
                 FontVariation.weight(artistNameFontWeight)
             )
@@ -162,7 +162,7 @@ private fun TrackInfo(viewModel: MusicPlayerViewModel, width: Dp = 300.dp) {
             style = MaterialTheme.typography.labelMedium,
             textAlign = TextAlign.Center,
             maxLines = 1,
-            fontFamily = montserratFont,
+            fontFamily = manropeFont,
             fontSize = artistNameFontSize,
             color = lightThemeColor,
             overflow = TextOverflow.Ellipsis,

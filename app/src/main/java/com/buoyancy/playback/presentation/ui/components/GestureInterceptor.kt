@@ -21,6 +21,8 @@ private sealed class SwipeType {
     data object Vertical : SwipeType()
 }
 
+private const val tan60 = 1.7321f
+
 @Composable
 fun GestureInterceptor(
     content: @Composable () -> Unit,
@@ -55,7 +57,7 @@ fun GestureInterceptor(
                         val dY = dragAmount.y
 
                         if (swipeType == null) {
-                            if (abs(dX) > abs(dY)) {
+                            if (abs(dX) / abs(dY) >= tan60) {
                                 swipeType = SwipeType.Horizontal
                                 viewModel.onHorizontalDragStart()
                             } else {
