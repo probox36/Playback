@@ -68,7 +68,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -84,6 +83,7 @@ dependencies {
     implementation(libs.coil.kt.coil.compose)
     implementation(libs.coil)
     implementation(libs.androidx.material.icons.extended)
+    implementation(libs.retrofit)
     kapt(libs.hilt.android.compiler)
     kapt(libs.hilt.android)
     testImplementation(libs.junit)
