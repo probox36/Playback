@@ -30,9 +30,11 @@ android {
             load(rootProject.file("local.properties").inputStream())
         }
         val clientId = localProperties.getProperty("spotify.appremote.clientid")
+        val clientSecret = localProperties.getProperty("spotify.appremote.clientsecret")
         val redirectUri = localProperties.getProperty("spotify.appremote.redirecturi")
 
         resValue("string", "CLIENT_ID", clientId)
+        resValue("string", "CLIENT_SECRET", clientSecret)
         resValue("string", "REDIRECT_URI", redirectUri)
     }
 
@@ -79,8 +81,8 @@ dependencies {
     implementation(files("libs/spotify-app-remote-release-0.8.0.aar"))
     implementation(files("libs/spotify-auth-release-2.1.0.aar"))
     implementation(libs.hilt.android)
-    implementation("io.coil-kt:coil-compose:2.7.0")
-    implementation("io.coil-kt:coil:2.7.0")
+    implementation(libs.coil.kt.coil.compose)
+    implementation(libs.coil)
     implementation(libs.androidx.material.icons.extended)
     kapt(libs.hilt.android.compiler)
     kapt(libs.hilt.android)

@@ -6,14 +6,19 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
 import com.buoyancy.playback.model.GestureHandlingViewModel
-import com.buoyancy.playback.service.SpotifyPlaybackController
+import com.buoyancy.playback.model.TokenSubscription
+import com.buoyancy.playback.service.api.impl.SpotifyPlaybackControllerImpl
+import com.buoyancy.playback.service.api.impl.SpotifyWebApiImpl
+import com.buoyancy.playback.service.auth.AppRemoteManager
+import com.buoyancy.playback.service.auth.TokenManager
 import com.buoyancy.playback.utils.StringUtils.Companion.formatDuration
-import com.buoyancy.playback.viewmodel.exceptions.NoConnectionToSpotifyException
+import com.buoyancy.playback.utils.ToastUtils.toast
+import com.spotify.android.appremote.api.Connector.ConnectionListener
+import com.spotify.android.appremote.api.SpotifyAppRemote
 import com.spotify.protocol.types.PlayerState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -23,51 +28,83 @@ sealed class PlayerEvent {
 
 @HiltViewModel
 class MusicPlayerViewModel @Inject constructor(
-    private val playbackController: SpotifyPlaybackController
+    private val appRemoteManager: AppRemoteManager,
+    private val tokenManager: TokenManager
 ) : GestureHandlingViewModel() {
 
-    // UI State (публичные mutableState с приватным сеттером)
+    // UI State
     var trackName = mutableStateOf("")
-        private set
     var artistName = mutableStateOf("")
-        private set
     var timePassed = mutableStateOf("00:00")
-        private set
     var trackDuration = mutableStateOf("00:00")
-        private set
     var coverUri = mutableStateOf("")
-        private set
     var playbackPosition = mutableDoubleStateOf(0.0)
-        private set
     var yDrag = mutableFloatStateOf(0F)
-        private set
     var seeking = mutableStateOf(false)
-        private set
 
-    // Приватные свойства
+    // Private properties
+    private val tag = "MusicPlayerVM"
     private var wasPaused = false
     private var savedPlaybackPosition = 0.0
     private var savedTrackDuration = 0L
     private var coverHash = ""
 
-    // Константы
+    // Spotify api wrappers
+    private var webApi: SpotifyWebApiImpl ? = null
+    private var playbackController: SpotifyPlaybackControllerImpl ? = null
+    private var webApiReady = false
+    private var playbackControllerReady = false
+
+    // Consts
     companion object {
         private const val COVER_BASE_URL = "https://i.scdn.co/image/"
         private const val NO_CONNECTION_MSG = "Playback controller not initialized. Re-trying connection..."
         private const val DRAG_SENSITIVITY = 600f
     }
 
-    // События
-    private val _toastEvent = MutableSharedFlow<String>()
-    val toastEvent: SharedFlow<String> = _toastEvent.asSharedFlow()
+    // Events
     private val _playerEvents = MutableSharedFlow<PlayerEvent>()
     val playerEvents: SharedFlow<PlayerEvent> = _playerEvents
 
     init {
-        playbackController.subscribe(::processPlayerState)
+        setupAppRemoteSubscription()
+        setupTokenSubscription()
     }
 
-    // Основные методы
+    // Spotify app remote subscription. onConnected executes when remote is ready
+    private fun setupAppRemoteSubscription() {
+        appRemoteManager.subscribeForAppRemote(object : ConnectionListener {
+            override fun onConnected(remoteArg: SpotifyAppRemote) {
+                playbackController = SpotifyPlaybackControllerImpl(remoteArg).apply {
+                    subscribeToPlayerState(::processPlayerState)
+                }
+                playbackControllerReady = true
+                logDebug("Received appRemote and constructed playback controller")
+            }
+            override fun onFailure(t: Throwable?) {}
+        })
+    }
+
+    // Spotify web api token subscription. onTokenReceived executes when token is fetched
+    private fun setupTokenSubscription() {
+        tokenManager.subscribeForToken(object : TokenSubscription {
+            override fun onTokenReceived(token: String) {
+                webApi = SpotifyWebApiImpl(token)
+                webApiReady = true
+                logDebug("Received token and constructed SpotifyWebApi")
+            }
+            override fun onFailure(error: Throwable) {
+                logError("Cannot construct SpotifyWebApi: failed to get token")
+            }
+            override fun onTokenTemporarilyInvalid() {
+                webApiReady = false
+                webApi = null
+                logDebug("Token temporarily invalidated")
+            }
+        })
+    }
+
+    // Main methods
     private fun processPlayerState(state: PlayerState) {
         if (seeking.value) return
 
@@ -91,37 +128,31 @@ class MusicPlayerViewModel @Inject constructor(
         }
     }
 
-    fun triggerToast(message: String) {
-        viewModelScope.launch {
-            _toastEvent.emit(message)
-        }
+    private inline fun SpotifyPlaybackControllerImpl?.executeIfReady(
+        action: SpotifyPlaybackControllerImpl.() -> Unit
+    ) {
+        if (playbackControllerReady) this?.action() else toast(NO_CONNECTION_MSG)
     }
 
-    private fun executePlaybackAction(action: () -> Unit) {
-        try {
-            action()
-        } catch (e: NoConnectionToSpotifyException) {
-            triggerToast(NO_CONNECTION_MSG)
-            playbackController.connect()
-        }
+    // Button callbacks
+    fun onPrevClick() = playbackController.executeIfReady { previous() }
+    fun onNextClick() = playbackController.executeIfReady { next() }
+    fun onPlayClick() = playbackController.executeIfReady { playPause() }
+    fun disconnect() {
+        playbackController.executeIfReady { disconnect() }
+        tokenManager.stopTokenRefreshing()
     }
 
-    // Управление плеером
-    fun onPrevClick() = executePlaybackAction(playbackController::previous)
-    fun onNextClick() = executePlaybackAction(playbackController::next)
-    fun onPlayClick() = executePlaybackAction(playbackController::playPause)
-    fun disconnect() = executePlaybackAction(playbackController::disconnect)
-
-    // Обработчики жестов
-    override fun onTap() { log("Single tap detected!") }
-    override fun onDoubleTap() { log("Double tap detected!") }
+    // Gesture handlers
+    override fun onTap() { logDebug("Single tap detected!") }
+    override fun onDoubleTap() { logDebug("Double tap detected!") }
 
     override fun onHorizontalDragStart() {
         seeking.value = true
-        wasPaused = playbackController.state?.isPaused ?: true
+        wasPaused = playbackController?.state?.isPaused ?: true
         savedPlaybackPosition = playbackPosition.doubleValue
-        savedTrackDuration = playbackController.state?.track?.duration ?: 0L
-        playbackController.pause()
+        savedTrackDuration = playbackController?.state?.track?.duration ?: 0L
+        playbackController?.pause()
     }
 
     override fun onHorizontalDrag(dX: Float) {
@@ -130,26 +161,25 @@ class MusicPlayerViewModel @Inject constructor(
     }
 
     override fun onHorizontalDragEnd() {
-        executePlaybackAction {
-            playbackController.seekTo(absolutePlaybackPosition())
-        }
+        playbackController.executeIfReady { seekTo(absolutePlaybackPosition()) }
         seeking.value = false
-        if (!wasPaused) playbackController.resume()
+        if (!wasPaused) playbackController.executeIfReady { resume() }
     }
 
-    override fun onVerticalDragStart() { log("Vertical drag started") }
+    override fun onVerticalDragStart() { logDebug("Vertical drag started") }
     override fun onVerticalDrag(dY: Float) {
         yDrag.floatValue = dY
     }
     override fun onVerticalDragEnd() {
-        log("Vertical drag ended")
+        logDebug("Vertical drag ended")
         yDrag.floatValue = 0F
         viewModelScope.launch {
             _playerEvents.emit(PlayerEvent.VerticalDragEnded)
         }
     }
 
-    // Вспомогательные методы
+    // Helper methods
     private fun absolutePlaybackPosition() = (savedTrackDuration * playbackPosition.doubleValue).toLong()
-    private fun log(message: String) { Log.i("MusicPlayerVM", message) }
+    private fun logDebug(message: String) { Log.d(tag, message) }
+    private fun logError(message: String) { Log.e(tag, message) }
 }

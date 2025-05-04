@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.runtime.mutableStateOf
 import com.buoyancy.playback.model.OptionComponentState
 import com.buoyancy.playback.viewmodel.MusicPlayerViewModel
+import com.buoyancy.playback.utils.ToastUtils.toast
 
 class OptionPresets {
     companion object {
@@ -23,10 +24,10 @@ class OptionPresets {
 
         fun nowPlayingCallbacks(viewModel: MusicPlayerViewModel): List<() -> Unit> {
             return listOf(
-                { viewModel.triggerToast("Option Поделиться chosen!") },
-                { viewModel.triggerToast("Option Добавить в избранное chosen!") },
-                { viewModel.triggerToast("Option Повтор chosen!") },
-                { viewModel.triggerToast("Option Шафл chosen!") }
+                { toast("Option Поделиться chosen!") },
+                { toast("Option Добавить в избранное chosen!") },
+                { toast("Option Повтор chosen!") },
+                { toast("Option Шафл chosen!") }
             )
         }
     }
