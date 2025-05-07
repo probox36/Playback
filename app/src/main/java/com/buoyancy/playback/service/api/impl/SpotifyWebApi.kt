@@ -2,19 +2,20 @@ package com.buoyancy.playback.service.api.impl
 
 import android.util.Log
 import com.buoyancy.playback.model.exceptions.SpotifyApiException
-import com.buoyancy.playback.model.spotify.Queue
-import com.buoyancy.playback.service.api.SpotifyWebApi
+import com.buoyancy.playback.model.music.Queue
+import com.buoyancy.playback.model.music.Track
+import com.buoyancy.playback.service.api.MusicLibraryProvider
 import com.buoyancy.playback.service.retrofit.SpotifyApiClient
 import retrofit2.Response
 
-class SpotifyWebApiImpl(
+class SpotifyWebApi(
     accessToken: String
-) : SpotifyWebApi {
+) : MusicLibraryProvider {
 
     private val tag = "SpotifyWebApi"
     private val apiClient = SpotifyApiClient(accessToken)
 
-    override suspend fun getPlayerQueue(): Queue? {
+    suspend fun getQueueRaw(): Queue? {
         return try {
             val response = apiClient.service.getPlayerQueue()
             when {
@@ -25,6 +26,25 @@ class SpotifyWebApiImpl(
             Log.e(tag, "Queue request failed", e)
             null
         }
+    }
+
+    override suspend fun getQueue(): List<Track?> {
+        val queueRaw = getQueueRaw()
+        val queue = mutableListOf(queueRaw?.currentlyPlaying)
+        queueRaw?.queue?.let { queue.addAll(it) }
+        return queue
+    }
+
+    override suspend fun getPrevious(): Track? {
+        return null
+    }
+
+    override suspend fun getCurrent(): Track? {
+        return getQueueRaw()?.currentlyPlaying
+    }
+
+    override suspend fun getNext(): Track? {
+        return getQueueRaw()?.queue?.first()
     }
 
     private fun handleErrorResponse(response: Response<*>): Nothing {

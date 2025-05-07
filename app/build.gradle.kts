@@ -84,6 +84,8 @@ dependencies {
     implementation(libs.coil)
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    runtimeOnly(libs.kotlinx.coroutines.android)
     kapt(libs.hilt.android.compiler)
     kapt(libs.hilt.android)
     testImplementation(libs.junit)

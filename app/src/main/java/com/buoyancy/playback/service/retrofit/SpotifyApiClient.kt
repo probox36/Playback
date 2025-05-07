@@ -3,11 +3,13 @@ package com.buoyancy.playback.service.retrofit
 import com.buoyancy.playback.service.retrofit.template.SpotifyApiTemplate
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 class SpotifyApiClient(private val accessToken: String) {
 
     private val retrofit = Retrofit.Builder()
         .baseUrl("https://api.spotify.com/")
+        .addConverterFactory(GsonConverterFactory.create())
         .client(createOkHttpClient())
         .build()
 

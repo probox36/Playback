@@ -1,4 +1,4 @@
-package com.buoyancy.playback.model.spotify
+package com.buoyancy.playback.model.music
 
 import com.google.gson.annotations.SerializedName
 

@@ -1,7 +1,6 @@
 package com.buoyancy.playback.presentation.ui.components
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -47,7 +46,7 @@ import com.buoyancy.playback.R
 fun ProgressBar(
     playbackPosition: MutableDoubleState,
     timePassed: MutableState<String>,
-    trackDuration: MutableState<String>,
+    trackDuration: String,
     seeking: MutableState<Boolean>,
     columnWidth: Dp = 300.dp,
     axisHeight: Dp = 60.dp
@@ -117,7 +116,7 @@ fun ProgressBar(
                 // Фоновые метки времени
                 TimeLabels(
                     timePassed = timePassed.value,
-                    trackDuration = trackDuration.value,
+                    trackDuration = trackDuration,
                     fontFamily = unboundedFont,
                     fontSize = fontSize,
                     textColor = trackColor,
@@ -144,7 +143,7 @@ fun ProgressBar(
                     // Метки времени поверх прогресса
                     TimeLabels(
                         timePassed = timePassed.value,
-                        trackDuration = trackDuration.value,
+                        trackDuration = trackDuration,
                         fontFamily = unboundedFont,
                         fontSize = fontSize,
                         textColor = middleLayerColor,
@@ -195,7 +194,7 @@ fun ProgressBarPreview() {
     ProgressBar(
         playbackPosition = remember { mutableDoubleStateOf(0.75) },
         timePassed = remember { mutableStateOf("00:45") },
-        trackDuration = remember { mutableStateOf("01:00") },
+        trackDuration = "01:00",
         seeking = remember { mutableStateOf(false) }
     )
 }

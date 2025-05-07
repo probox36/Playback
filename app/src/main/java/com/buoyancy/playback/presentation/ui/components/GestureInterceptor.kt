@@ -38,7 +38,7 @@ fun GestureInterceptor(
         modifier = Modifier
             .pointerInput(Unit) {
                 detectTapGestures(
-//                    onTap = { viewModel.onTap() },
+                    onTap = { viewModel.onTap() },
                     onDoubleTap = {
                         view.performHapticFeedback(Haptics.LONG_PRESS)
                         viewModel.onDoubleTap()

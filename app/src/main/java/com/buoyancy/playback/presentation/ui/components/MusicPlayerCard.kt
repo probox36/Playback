@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,10 +12,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -37,7 +39,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.buoyancy.playback.R
+import com.buoyancy.playback.model.music.CoverImage
+import com.buoyancy.playback.model.music.Track
+import com.buoyancy.playback.utils.StringUtils.Companion.formatDuration
 import com.buoyancy.playback.viewmodel.MusicPlayerViewModel
+import kotlin.math.abs
 
 val lightThemeColor = Color(0xFFF0E1DE)
 const val trackNameFontWeight = 500
@@ -45,12 +51,20 @@ const val artistNameFontWeight = 550
 val trackNameFontSize = 20.sp
 val artistNameFontSize = 16.sp
 
+private const val preferredCoverSize = 300 * 300
+
 @Composable
 fun MusicPlayerCard(
+    trackInd: Int,
     viewModel: MusicPlayerViewModel,
+    isActive: State<Boolean>,
+    isVisible: State<Boolean>,
     modifier: Modifier = Modifier,
     contentWidth: Dp = 300.dp
 ) {
+    val track: Track? = if (viewModel.queue.value.size > trackInd) viewModel.queue.value[trackInd] else null
+    val coverUri = track?.album?.images?.let { pickCover(it) }
+
     BoxWithConstraints(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -70,7 +84,7 @@ fun MusicPlayerCard(
         ) {
             // Размытый фон альбома
             AsyncImage(
-                model = viewModel.coverUri.value,
+                model = coverUri,
                 contentDescription = "Album background",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -89,7 +103,7 @@ fun MusicPlayerCard(
             ) {
                 // Обложка альбома
                 AsyncImage(
-                    model = viewModel.coverUri.value,
+                    model = coverUri,
                     contentDescription = "Album cover",
                     modifier = Modifier
                         .size(contentWidth)
@@ -100,15 +114,15 @@ fun MusicPlayerCard(
                 Spacer(Modifier.height(16.dp))
 
                 // Информация о треке
-                TrackInfo(viewModel, contentWidth)
+                TrackInfo(track, contentWidth)
 
                 Spacer(Modifier.height(16.dp))
 
                 // Прогресс-бар
                 ProgressBar(
-                    viewModel.playbackPosition,
-                    viewModel.timePassed,
-                    viewModel.trackDuration,
+                    if (isActive.value) viewModel.playbackPosition else remember { mutableDoubleStateOf(0.0) },
+                    if (isActive.value) viewModel.timePassedStr else remember { mutableStateOf("00:00") },
+                    track?.duration?.let { formatDuration(it) } ?: "00:00",
                     viewModel.seeking,
                     contentWidth
                 )
@@ -116,7 +130,7 @@ fun MusicPlayerCard(
                 Spacer(Modifier.height(16.dp))
 
                 // Управление воспроизведением
-                PlayerControls(viewModel)
+//                PlayerControls()
             }
         }
     }
@@ -124,7 +138,7 @@ fun MusicPlayerCard(
 
 @OptIn(ExperimentalTextApi::class)
 @Composable
-private fun TrackInfo(viewModel: MusicPlayerViewModel, width: Dp = 300.dp) {
+private fun TrackInfo(track: Track?, width: Dp = 300.dp) {
 
     val unboundedFont = FontFamily(
         Font(
@@ -145,7 +159,7 @@ private fun TrackInfo(viewModel: MusicPlayerViewModel, width: Dp = 300.dp) {
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            text = viewModel.trackName.value,
+            text = track?.name ?: "",
             textAlign = TextAlign.Center,
             maxLines = 1,
             fontFamily = unboundedFont,
@@ -158,7 +172,7 @@ private fun TrackInfo(viewModel: MusicPlayerViewModel, width: Dp = 300.dp) {
         Spacer(Modifier.height(5.dp))
 
         Text(
-            text = viewModel.artistName.value,
+            text = track?.artists?.map{ it.name }?.joinToString(", ") ?: "",
             style = MaterialTheme.typography.labelMedium,
             textAlign = TextAlign.Center,
             maxLines = 1,
@@ -171,29 +185,16 @@ private fun TrackInfo(viewModel: MusicPlayerViewModel, width: Dp = 300.dp) {
     }
 }
 
-@Composable
-private fun PlayerControls(viewModel: MusicPlayerViewModel) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        PlayerButton("⏮", { viewModel.onPrevClick() })
-        Spacer(Modifier.width(16.dp))
-        PlayerButton("⏯", { viewModel.onPlayClick() })
-        Spacer(Modifier.width(16.dp))
-        PlayerButton("⏭", { viewModel.onNextClick() })
-    }
-}
+private fun pickCover(covers: List<CoverImage>): String? {
+    var chosenCover: String ? = null
+    var bestDelta = Int.MAX_VALUE
 
-@Composable
-private fun PlayerButton(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Button(
-        onClick = onClick,
-        modifier = modifier.size(64.dp)
-    ) {
-        Text(text)
+    covers.forEach{ c ->
+        val delta = abs(preferredCoverSize - c.width * c.height)
+        if (delta < bestDelta) {
+            bestDelta = delta
+            chosenCover = c.url
+        }
     }
+    return chosenCover
 }

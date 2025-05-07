@@ -1,6 +1,6 @@
 package com.buoyancy.playback.service.retrofit.template
 
-import com.buoyancy.playback.model.spotify.Queue
+import com.buoyancy.playback.model.music.Queue
 import retrofit2.Response
 import retrofit2.http.GET
 

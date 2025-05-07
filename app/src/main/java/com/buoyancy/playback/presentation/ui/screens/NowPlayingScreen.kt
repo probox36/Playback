@@ -9,6 +9,12 @@ import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
@@ -23,10 +29,43 @@ fun NowPlayingScreen(
     viewModel: MusicPlayerViewModel
 ) {
     val backgroundColor = Color(0xFF702A24)
-    val pagerState = rememberPagerState(initialPage = 1, pageCount = { 3 })
+    val queue = viewModel.queue.value
+    val pagerState = rememberPagerState(initialPage = 0) { queue.size }
+
     val pageHeightToScreenHeight = 0.7f
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-    val yCardOffset = screenHeight.times((1f - pageHeightToScreenHeight) / 2f)
+    val yCardOffset = screenHeight * (1f - pageHeightToScreenHeight) / 2f
+
+    var isProgrammaticScroll by remember { mutableStateOf(false) }
+    var previousPage by remember { mutableIntStateOf(pagerState.settledPage) }
+
+    LaunchedEffect(pagerState.settledPage) {
+        if (!isProgrammaticScroll) {
+            when {
+                pagerState.settledPage > previousPage -> viewModel.onNext()
+                pagerState.settledPage < previousPage -> viewModel.onPrev()
+            }
+        }
+        previousPage = pagerState.settledPage
+        isProgrammaticScroll = false
+    }
+
+    LaunchedEffect(viewModel.currentTrackUri) {
+        val queueNotEmpty = viewModel.queue.value.isNotEmpty()
+        if (queueNotEmpty) {
+            val currentTrackUri = viewModel.currentTrackUri
+            val pagerTrackUri = viewModel.queue.value[pagerState.settledPage]?.uri
+            if (currentTrackUri != pagerTrackUri) {
+                viewModel.queue.value
+                    .indexOfFirst { it?.uri == viewModel.currentTrackUri }
+                    .takeIf { it != -1 }
+                    ?.let { newIndex ->
+                        isProgrammaticScroll = true
+                        pagerState.animateScrollToPage(newIndex)
+                    }
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -36,29 +75,24 @@ fun NowPlayingScreen(
         VerticalPager(
             state = pagerState,
             pageSpacing = 40.dp,
-            pageSize = PageSize.Fixed(screenHeight.times(pageHeightToScreenHeight)),
-            contentPadding = PaddingValues(top = yCardOffset, bottom = yCardOffset),
+            pageSize = PageSize.Fixed(screenHeight * pageHeightToScreenHeight),
+            contentPadding = PaddingValues(vertical = yCardOffset),
             userScrollEnabled = true
-        ) {
-            MusicPlayerCard(viewModel)
+        ) { page ->
+            MusicPlayerCard(
+                trackInd = page,
+                viewModel = viewModel,
+                isActive = remember(page) { derivedStateOf { pagerState.settledPage == page } },
+                isVisible = remember(page) { derivedStateOf {
+                    page in (pagerState.settledPage - 1)..(pagerState.settledPage + 1)
+                } }
+            )
         }
 
         Options(
             viewModel,
             OptionPresets.nowPlayingOptions(),
-            OptionPresets.nowPlayingCallbacks( viewModel )
+            OptionPresets.nowPlayingCallbacks(viewModel)
         )
-
-        // Обработка событий скролла
-        LaunchedEffect(pagerState.currentPage) {
-            when (pagerState.currentPage) {
-                0 -> {
-//                    viewModel.triggerToast("onPrevCardSwipe()")
-                }
-                2 -> {
-//                    viewModel.triggerToast("onNextCardSwipe()")
-                }
-            }
-        }
     }
 }
