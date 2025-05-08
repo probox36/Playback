@@ -29,7 +29,7 @@ fun NowPlayingScreen(
     viewModel: MusicPlayerViewModel
 ) {
     val backgroundColor = Color(0xFF702A24)
-    val queue = viewModel.queue.value
+    val queue = viewModel.musicService.queue.value
     val pagerState = rememberPagerState(initialPage = 0) { queue.size }
 
     val pageHeightToScreenHeight = 0.7f
@@ -51,13 +51,12 @@ fun NowPlayingScreen(
     }
 
     LaunchedEffect(viewModel.currentTrackUri) {
-        val queueNotEmpty = viewModel.queue.value.isNotEmpty()
+        val queueNotEmpty = queue.isNotEmpty()
         if (queueNotEmpty) {
             val currentTrackUri = viewModel.currentTrackUri
-            val pagerTrackUri = viewModel.queue.value[pagerState.settledPage]?.uri
+            val pagerTrackUri = queue[pagerState.settledPage]?.uri
             if (currentTrackUri != pagerTrackUri) {
-                viewModel.queue.value
-                    .indexOfFirst { it?.uri == viewModel.currentTrackUri }
+                queue.indexOfFirst { it?.uri == viewModel.currentTrackUri }
                     .takeIf { it != -1 }
                     ?.let { newIndex ->
                         isProgrammaticScroll = true

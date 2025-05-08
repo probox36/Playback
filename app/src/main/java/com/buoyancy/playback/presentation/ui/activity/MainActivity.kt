@@ -6,15 +6,11 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.ui.Modifier
-import com.buoyancy.playback.presentation.ui.components.GestureInterceptor
-import com.buoyancy.playback.presentation.ui.screens.NowPlayingScreen
+import com.buoyancy.playback.presentation.ui.screens.MainScreen
 import com.buoyancy.playback.presentation.ui.theme.PlaybackTheme
 import com.buoyancy.playback.service.auth.TokenManager
 import com.buoyancy.playback.utils.ToastUtils
+import com.buoyancy.playback.viewmodel.AlbumsViewModel
 import com.buoyancy.playback.viewmodel.MusicPlayerViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import jakarta.inject.Inject
@@ -24,6 +20,7 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var tokenManager: TokenManager
     private val playerViewModel: MusicPlayerViewModel by viewModels()
+    private val albumsViewModel: AlbumsViewModel by viewModels()
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -38,12 +35,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             PlaybackTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    GestureInterceptor({ NowPlayingScreen(playerViewModel) }, playerViewModel)
-                }
+                MainScreen(playerViewModel, albumsViewModel)
             }
         }
     }
@@ -51,7 +43,7 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         Log.d("MainActivity", "Destroy method called")
-        playerViewModel.disconnect()
+        playerViewModel.musicService.disconnect()
         tokenManager.stopTokenRefreshing()
     }
 }

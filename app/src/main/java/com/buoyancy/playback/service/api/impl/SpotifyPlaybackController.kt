@@ -12,7 +12,7 @@ class SpotifyPlaybackController(
     val remote: SpotifyAppRemote
 ) : PlaybackControlProvider {
 
-    private var notifySubscriber: (PlayerState) -> Unit = {}
+    var notifySubscriber: (PlayerState) -> Unit = {}
     private var handler = Handler(Looper.getMainLooper())
     private val pollingFrequency: Long = 250
 

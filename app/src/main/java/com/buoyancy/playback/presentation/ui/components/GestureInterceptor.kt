@@ -12,7 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalView
-import com.buoyancy.playback.model.GestureHandlingViewModel
+import com.buoyancy.playback.model.GestureHandler
 import kotlin.math.abs
 import android.view.HapticFeedbackConstants as Haptics
 
@@ -26,7 +26,7 @@ private const val tan60 = 1.7321f
 @Composable
 fun GestureInterceptor(
     content: @Composable () -> Unit,
-    viewModel: GestureHandlingViewModel
+    viewModel: GestureHandler
 ) {
     val view = LocalView.current
     val offsetX = remember { mutableFloatStateOf(0f) }

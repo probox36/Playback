@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -62,7 +63,8 @@ fun MusicPlayerCard(
     modifier: Modifier = Modifier,
     contentWidth: Dp = 300.dp
 ) {
-    val track: Track? = if (viewModel.queue.value.size > trackInd) viewModel.queue.value[trackInd] else null
+    val queue: MutableState<List<Track?>> = viewModel.musicService.queue
+    val track: Track? = if (queue.value.size > trackInd) queue.value[trackInd] else null
     val coverUri = track?.album?.images?.let { pickCover(it) }
 
     BoxWithConstraints(
