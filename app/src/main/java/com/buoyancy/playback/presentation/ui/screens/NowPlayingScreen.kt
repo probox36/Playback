@@ -1,5 +1,6 @@
 package com.buoyancy.playback.presentation.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,6 +24,7 @@ import com.buoyancy.playback.presentation.ui.components.MusicPlayerCard
 import com.buoyancy.playback.presentation.ui.components.Options
 import com.buoyancy.playback.presentation.ui.presets.OptionPresets
 import com.buoyancy.playback.viewmodel.MusicPlayerViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun NowPlayingScreen(
@@ -31,6 +33,7 @@ fun NowPlayingScreen(
     val backgroundColor = Color(0xFF702A24)
     val queue = viewModel.musicService.queue.value
     val pagerState = rememberPagerState(initialPage = 0) { queue.size }
+    val musicService = viewModel.musicService
 
     val pageHeightToScreenHeight = 0.7f
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
@@ -50,13 +53,12 @@ fun NowPlayingScreen(
         isProgrammaticScroll = false
     }
 
-    LaunchedEffect(viewModel.currentTrackUri) {
-        val queueNotEmpty = queue.isNotEmpty()
-        if (queueNotEmpty) {
-            val currentTrackUri = viewModel.currentTrackUri
+    LaunchedEffect(musicService.currentTrackUri, queue) {
+        if (queue.isNotEmpty()) {
+            val currentTrackUri = musicService.currentTrackUri
             val pagerTrackUri = queue[pagerState.settledPage]?.uri
             if (currentTrackUri != pagerTrackUri) {
-                queue.indexOfFirst { it?.uri == viewModel.currentTrackUri }
+                queue.indexOfFirst { it?.uri == musicService.currentTrackUri }
                     .takeIf { it != -1 }
                     ?.let { newIndex ->
                         isProgrammaticScroll = true

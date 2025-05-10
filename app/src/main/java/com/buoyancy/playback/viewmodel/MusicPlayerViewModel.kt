@@ -1,26 +1,24 @@
 package com.buoyancy.playback.viewmodel
 
 import android.util.Log
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.buoyancy.playback.model.GestureEvent
 import com.buoyancy.playback.model.GestureHandler
+import com.buoyancy.playback.service.MusicService
 import com.buoyancy.playback.utils.StringUtils.Companion.formatDuration
 import com.spotify.protocol.types.PlayerState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-sealed class PlayerEvent {
-    data object VerticalDragEnded : PlayerEvent()
-}
 
 @HiltViewModel
 class MusicPlayerViewModel @Inject constructor(
@@ -35,7 +33,6 @@ class MusicPlayerViewModel @Inject constructor(
     var playbackPosition = mutableDoubleStateOf(0.0)
     var yDrag = mutableFloatStateOf(0F)
     var seeking = mutableStateOf(false)
-    var currentTrackUri by mutableStateOf("")
 
     // Private properties
     private var wasPaused = false
@@ -47,8 +44,8 @@ class MusicPlayerViewModel @Inject constructor(
     private val dragSensitivity = 600f
 
     // Events
-    private val _playerEvents = MutableSharedFlow<PlayerEvent>()
-    val playerEvents: SharedFlow<PlayerEvent> = _playerEvents
+    private val _gestureEvents = MutableSharedFlow<GestureEvent>()
+    val gestureEvents: SharedFlow<GestureEvent> = _gestureEvents
 
     // Main methods
     private fun processPlayerState(state: PlayerState) {
@@ -57,23 +54,19 @@ class MusicPlayerViewModel @Inject constructor(
             timePassed.longValue = state.playbackPosition
             playbackPosition.doubleValue = state.playbackPosition.toDouble() / duration.toDouble()
             timePassedStr.value = formatDuration(state.playbackPosition)
-            if (state.track.uri != currentTrackUri) {
-                currentTrackUri = state.track.uri
-            }
         }
     }
 
     // Playback actions
     fun onPrev() = preservePlaybackState {
-        if (timePassed.longValue < 3000L)
+        if (timePassed.longValue < 3000L) {
             musicService.previous()
-        else
+        } else {
             musicService.previous()
             musicService.previous()
+        }
     }
-    fun onNext() = preservePlaybackState {
-        musicService.next()
-    }
+    fun onNext() = preservePlaybackState { musicService.next() }
     fun onPlayPause() = musicService.playPause()
 
     // Gesture handlers
@@ -107,7 +100,7 @@ class MusicPlayerViewModel @Inject constructor(
         logDebug("Vertical drag ended")
         yDrag.floatValue = 0F
         viewModelScope.launch {
-            _playerEvents.emit(PlayerEvent.VerticalDragEnded)
+            _gestureEvents.emit(GestureEvent.VerticalDragEnded)
         }
     }
 

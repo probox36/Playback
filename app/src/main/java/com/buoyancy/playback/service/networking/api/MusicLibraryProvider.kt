@@ -1,5 +1,6 @@
-package com.buoyancy.playback.service.api
+package com.buoyancy.playback.service.networking.api
 
+import com.buoyancy.playback.model.music.Playlist
 import com.buoyancy.playback.model.music.Track
 
 interface MusicLibraryProvider {
@@ -7,4 +8,5 @@ interface MusicLibraryProvider {
     suspend fun getPrevious(): Track?
     suspend fun getCurrent(): Track?
     suspend fun getNext(): Track?
+    suspend fun getUserPlaylists(): List<Playlist?>
 }

@@ -31,9 +31,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
+import com.buoyancy.playback.model.GestureEvent
 import com.buoyancy.playback.model.OptionComponentState
 import com.buoyancy.playback.viewmodel.MusicPlayerViewModel
-import com.buoyancy.playback.viewmodel.PlayerEvent
 import kotlin.math.roundToInt
 import android.view.HapticFeedbackConstants as haptics
 
@@ -101,10 +101,10 @@ fun Options(
     }
 
     LaunchedEffect(viewModel, lifecycleOwner) {
-        viewModel.playerEvents
+        viewModel.gestureEvents
             .flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.STARTED)
             .collect { event ->
-                if (event is PlayerEvent.VerticalDragEnded && index.intValue >= 0) {
+                if (event is GestureEvent.VerticalDragEnded && index.intValue >= 0) {
                     callbacks[rOptions.lastIndex - index.intValue]()
                 }
             }

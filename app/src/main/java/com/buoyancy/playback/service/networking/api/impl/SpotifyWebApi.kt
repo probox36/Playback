@@ -1,11 +1,13 @@
-package com.buoyancy.playback.service.api.impl
+package com.buoyancy.playback.service.networking.api.impl
 
 import android.util.Log
 import com.buoyancy.playback.model.exceptions.SpotifyApiException
+import com.buoyancy.playback.model.music.Playlist
+import com.buoyancy.playback.model.music.PlaylistResponse
 import com.buoyancy.playback.model.music.Queue
 import com.buoyancy.playback.model.music.Track
-import com.buoyancy.playback.service.api.MusicLibraryProvider
-import com.buoyancy.playback.service.retrofit.SpotifyApiClient
+import com.buoyancy.playback.service.networking.api.MusicLibraryProvider
+import com.buoyancy.playback.service.networking.http.SpotifyApiClient
 import retrofit2.Response
 
 class SpotifyWebApi(
@@ -15,17 +17,38 @@ class SpotifyWebApi(
     private val tag = "SpotifyWebApi"
     private val apiClient = SpotifyApiClient(accessToken)
 
-    suspend fun getQueueRaw(): Queue? {
+    private suspend fun <T> makeRequest(
+        request: suspend () -> Response<T>,
+        errorMessage: String
+    ): T? {
         return try {
-            val response = apiClient.service.getPlayerQueue()
+            val response = request()
             when {
                 response.isSuccessful -> response.body()
                 else -> handleErrorResponse(response)
             }
         } catch (e: Exception) {
-            Log.e(tag, "Queue request failed", e)
+            Log.e(tag, errorMessage, e)
             null
         }
+    }
+
+    suspend fun getQueueRaw(): Queue? {
+        return makeRequest(
+            { apiClient.service.getPlayerQueue() },
+            "Queue request failed"
+        )
+    }
+
+    suspend fun getUserPlaylistsRaw(): PlaylistResponse? {
+        return makeRequest(
+            { apiClient.service.getUserPlaylists(20, 0) },
+            "Playlists request failed"
+        )
+    }
+
+    override suspend fun getUserPlaylists(): List<Playlist> {
+        return getUserPlaylistsRaw()?.playlists ?: emptyList()
     }
 
     override suspend fun getQueue(): List<Track?> {

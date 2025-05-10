@@ -1,4 +1,4 @@
-package com.buoyancy.playback.service.api
+package com.buoyancy.playback.service.networking.api
 
 interface PlaybackControlProvider {
 
@@ -8,4 +8,5 @@ interface PlaybackControlProvider {
     fun resume()
     fun next()
     fun previous()
+    fun play(uri: String)
 }

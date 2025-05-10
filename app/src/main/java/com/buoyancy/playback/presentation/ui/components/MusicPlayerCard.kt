@@ -40,19 +40,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.buoyancy.playback.R
-import com.buoyancy.playback.model.music.CoverImage
 import com.buoyancy.playback.model.music.Track
 import com.buoyancy.playback.utils.StringUtils.Companion.formatDuration
 import com.buoyancy.playback.viewmodel.MusicPlayerViewModel
-import kotlin.math.abs
+import com.buoyancy.playback.utils.ImgUtils.pickCover
 
 val lightThemeColor = Color(0xFFF0E1DE)
 const val trackNameFontWeight = 500
 const val artistNameFontWeight = 550
 val trackNameFontSize = 20.sp
 val artistNameFontSize = 16.sp
-
-private const val preferredCoverSize = 300 * 300
+private val preferredCoverSize = 300 * 300
 
 @Composable
 fun MusicPlayerCard(
@@ -65,7 +63,7 @@ fun MusicPlayerCard(
 ) {
     val queue: MutableState<List<Track?>> = viewModel.musicService.queue
     val track: Track? = if (queue.value.size > trackInd) queue.value[trackInd] else null
-    val coverUri = track?.album?.images?.let { pickCover(it) }
+    val coverUri = track?.album?.images?.let { pickCover(it, preferredCoverSize) }
 
     BoxWithConstraints(
         contentAlignment = Alignment.Center,
@@ -130,9 +128,6 @@ fun MusicPlayerCard(
                 )
 
                 Spacer(Modifier.height(16.dp))
-
-                // Управление воспроизведением
-//                PlayerControls()
             }
         }
     }
@@ -185,18 +180,4 @@ private fun TrackInfo(track: Track?, width: Dp = 300.dp) {
             modifier = Modifier.width(width)
         )
     }
-}
-
-private fun pickCover(covers: List<CoverImage>): String? {
-    var chosenCover: String ? = null
-    var bestDelta = Int.MAX_VALUE
-
-    covers.forEach{ c ->
-        val delta = abs(preferredCoverSize - c.width * c.height)
-        if (delta < bestDelta) {
-            bestDelta = delta
-            chosenCover = c.url
-        }
-    }
-    return chosenCover
 }

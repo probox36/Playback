@@ -10,4 +10,8 @@ data class Track(
     @SerializedName("name") val name: String,
     @SerializedName("uri") val uri: String,
     @SerializedName("duration_ms") val duration: Long
-)
+) {
+    override fun toString(): String {
+        return name
+    }
+}

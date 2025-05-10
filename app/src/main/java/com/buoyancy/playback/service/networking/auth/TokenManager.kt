@@ -1,4 +1,4 @@
-package com.buoyancy.playback.service.auth
+package com.buoyancy.playback.service.networking.auth
 
 import android.app.Activity
 import android.content.Intent

@@ -8,9 +8,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import com.buoyancy.playback.presentation.ui.screens.MainScreen
 import com.buoyancy.playback.presentation.ui.theme.PlaybackTheme
-import com.buoyancy.playback.service.auth.TokenManager
+import com.buoyancy.playback.service.networking.auth.TokenManager
 import com.buoyancy.playback.utils.ToastUtils
-import com.buoyancy.playback.viewmodel.AlbumsViewModel
+import com.buoyancy.playback.viewmodel.LibraryViewModel
 import com.buoyancy.playback.viewmodel.MusicPlayerViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import jakarta.inject.Inject
@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var tokenManager: TokenManager
     private val playerViewModel: MusicPlayerViewModel by viewModels()
-    private val albumsViewModel: AlbumsViewModel by viewModels()
+    private val libraryViewModel: LibraryViewModel by viewModels()
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             PlaybackTheme {
-                MainScreen(playerViewModel, albumsViewModel)
+                MainScreen(playerViewModel, libraryViewModel)
             }
         }
     }

@@ -1,6 +1,5 @@
-package com.buoyancy.playback.service.retrofit
+package com.buoyancy.playback.service.networking.http
 
-import com.buoyancy.playback.service.retrofit.template.SpotifyApiTemplate
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory

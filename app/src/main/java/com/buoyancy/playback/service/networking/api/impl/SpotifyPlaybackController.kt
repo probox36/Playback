@@ -1,9 +1,9 @@
-package com.buoyancy.playback.service.api.impl
+package com.buoyancy.playback.service.networking.api.impl
 
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import com.buoyancy.playback.service.api.PlaybackControlProvider
+import com.buoyancy.playback.service.networking.api.PlaybackControlProvider
 import com.spotify.android.appremote.api.SpotifyAppRemote
 import com.spotify.protocol.types.PlayerState
 
@@ -12,7 +12,7 @@ class SpotifyPlaybackController(
     val remote: SpotifyAppRemote
 ) : PlaybackControlProvider {
 
-    var notifySubscriber: (PlayerState) -> Unit = {}
+    private var subscribers: MutableList<(PlayerState) -> Unit> = mutableListOf()
     private var handler = Handler(Looper.getMainLooper())
     private val pollingFrequency: Long = 250
 
@@ -28,7 +28,7 @@ class SpotifyPlaybackController(
             subscription.cancel()
             subscription = remote.playerApi.subscribeToPlayerState()
             subscription.setEventCallback { stateArg ->
-                notifySubscriber(stateArg)
+                notifySubscribers(stateArg)
                 state = stateArg
             }
             handler.postDelayed(this, pollingFrequency)
@@ -40,7 +40,11 @@ class SpotifyPlaybackController(
     }
 
     fun subscribeToPlayerState(listener: (PlayerState) -> Unit) {
-        this.notifySubscriber = listener
+        subscribers.add(listener)
+    }
+
+    private fun notifySubscribers(state: PlayerState) {
+        for (sub in subscribers) { sub(state) }
     }
 
     private fun monitorPlayback() {
@@ -63,6 +67,7 @@ class SpotifyPlaybackController(
     override fun resume() { player.resume() }
     override fun next() { player.skipNext() }
     override fun previous() { player.skipPrevious() }
+    override fun play(uri: String) { player.play(uri) }
     fun disconnect() {
         stopMonitoringPlayback()
         SpotifyAppRemote.disconnect(remote)
