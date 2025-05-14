@@ -5,6 +5,8 @@ import android.os.Looper
 import android.util.Log
 import com.buoyancy.playback.service.networking.api.PlaybackControlProvider
 import com.spotify.android.appremote.api.SpotifyAppRemote
+import com.spotify.protocol.client.CallResult
+import com.spotify.protocol.types.Empty
 import com.spotify.protocol.types.PlayerState
 
 
@@ -58,16 +60,16 @@ class SpotifyPlaybackController(
         subscription?.cancel()
     }
 
-    override fun playPause() {
-        if (state?.isPaused == true) player.resume() else player.pause()
+    override fun playPause() : CallResult<Empty> {
+        return if (state?.isPaused == true) player.resume() else player.pause()
     }
 
-    override fun seekTo(position: Long) { player.seekTo(position) }
-    override fun pause() { player.pause() }
-    override fun resume() { player.resume() }
-    override fun next() { player.skipNext() }
-    override fun previous() { player.skipPrevious() }
-    override fun play(uri: String) { player.play(uri) }
+    override fun seekTo(position: Long) : CallResult<Empty> { return player.seekTo(position) }
+    override fun pause() : CallResult<Empty> { return player.pause() }
+    override fun resume() : CallResult<Empty> { return player.resume() }
+    override fun next() : CallResult<Empty> { return player.skipNext() }
+    override fun previous() : CallResult<Empty> { return player.skipPrevious() }
+    override fun play(uri: String) : CallResult<Empty> { return player.play(uri) }
     fun disconnect() {
         stopMonitoringPlayback()
         SpotifyAppRemote.disconnect(remote)

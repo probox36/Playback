@@ -69,8 +69,7 @@ fun LibraryScreen(
             .collect { event ->
                 if (event is GestureEvent.Tap) {
                     musicService.play(playlists.value[pagerState.settledPage].uri)
-                    delay(1000) // Web API's kind of slow
-                    viewModel.musicService.updateQueue()
+                        ?.setResultCallback { musicService.updateQueue() }
                 }
             }
     }

@@ -2,10 +2,12 @@ package com.buoyancy.playback.viewmodel
 
 import android.util.Log
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.buoyancy.playback.model.GestureEvent
@@ -32,7 +34,7 @@ class MusicPlayerViewModel @Inject constructor(
     var timePassedStr = mutableStateOf("00:00")
     var playbackPosition = mutableDoubleStateOf(0.0)
     var yDrag = mutableFloatStateOf(0F)
-    var seeking = mutableStateOf(false)
+    var seeking by mutableStateOf(false)
 
     // Private properties
     private var wasPaused = false
@@ -49,7 +51,7 @@ class MusicPlayerViewModel @Inject constructor(
 
     // Main methods
     private fun processPlayerState(state: PlayerState) {
-        if (seeking.value) return
+        if (seeking) return
         with(state.track) {
             timePassed.longValue = state.playbackPosition
             playbackPosition.doubleValue = state.playbackPosition.toDouble() / duration.toDouble()
@@ -74,7 +76,7 @@ class MusicPlayerViewModel @Inject constructor(
     override fun onDoubleTap() { logDebug("Double tap detected!") }
 
     override fun onHorizontalDragStart() {
-        seeking.value = true
+        seeking = true
         wasPaused = musicService.isPaused() ?: true
         savedPlaybackPosition = playbackPosition.doubleValue
         savedTrackDuration = musicService.trackDuration() ?: 0L
@@ -87,9 +89,10 @@ class MusicPlayerViewModel @Inject constructor(
     }
 
     override fun onHorizontalDragEnd() {
-        musicService.seekTo(absolutePlaybackPosition())
-        seeking.value = false
-        if (!wasPaused) musicService.resume()
+        musicService.seekTo(absolutePlaybackPosition())?.setResultCallback {
+            if (!wasPaused) musicService.resume()
+            seeking = false
+        }
     }
 
     override fun onVerticalDragStart() { logDebug("Vertical drag started") }

@@ -15,6 +15,8 @@ import com.buoyancy.playback.service.networking.auth.TokenManager
 import com.buoyancy.playback.utils.ToastUtils.toast
 import com.spotify.android.appremote.api.Connector.ConnectionListener
 import com.spotify.android.appremote.api.SpotifyAppRemote
+import com.spotify.protocol.client.CallResult
+import com.spotify.protocol.types.Empty
 import com.spotify.protocol.types.PlayerState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -38,6 +40,7 @@ open class MusicService @Inject constructor(
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var playerVmSubscription: (PlayerState) -> Unit = {}
     private var pressedPrev = false
+    private var queueUpdated = false
 
     var currentTrackUri by mutableStateOf("")
         private set
@@ -48,7 +51,7 @@ open class MusicService @Inject constructor(
 
     // Spotify api wrappers
     var webApi: SpotifyWebApi ? = null
-    var playbackController: SpotifyPlaybackController ? = null
+    var remote: SpotifyPlaybackController ? = null
     var webApiReady = false
     var playbackControllerReady = false
 
@@ -61,7 +64,7 @@ open class MusicService @Inject constructor(
     private fun setupAppRemoteSubscription() {
         appRemoteManager.subscribeForAppRemote(object : ConnectionListener {
             override fun onConnected(remoteArg: SpotifyAppRemote) {
-                playbackController = SpotifyPlaybackController(remoteArg).apply {
+                remote = SpotifyPlaybackController(remoteArg).apply {
                     subscribeToPlayerState{ playerVmSubscription(it) }
                     subscribeToPlayerState { processPlayerState(it) }
                 }
@@ -95,7 +98,8 @@ open class MusicService @Inject constructor(
 
     private fun processPlayerState(state: PlayerState) {
         if (state.track.uri != currentTrackUri) {
-            if (!pressedPrev && currentTrackUri != "") appendQueue() else pressedPrev = false
+            if (!pressedPrev && !queueUpdated && currentTrackUri != "") appendQueue()
+            else { pressedPrev = false; queueUpdated = false }
             currentTrackUri = state.track.uri
         }
     }
@@ -110,7 +114,20 @@ open class MusicService @Inject constructor(
             }
             delay(500 * (attempt + 1L))
         }
-        throw TimeoutException("Failed to get new queue after 5 attempts")
+        throw TimeoutException("Failed to get new queue after 6 attempts")
+    }
+
+    fun updateQueue() {
+        logDebug("updateQueue called")
+        coroutineScope.launch {
+            try {
+                queue.value = getQueue().await()
+            } catch (e: Exception) {
+                queue.value = listOf()
+                logDebug(e.message)
+            }
+        }
+        queueUpdated = true
     }
 
     private fun appendQueue() {
@@ -141,47 +158,51 @@ open class MusicService @Inject constructor(
         }
     }
 
-    fun updateQueue() {
-        logDebug("updateQueue called")
-        coroutineScope.launch {
-            try {
-                queue.value = getQueue().await()
-            } catch (e: Exception) {
-                queue.value = listOf()
-                logDebug(e.message)
-            }
-        }
-    }
-
     private fun updatePlaylists() {
         coroutineScope.launch {
             playlists.value = webApi?.getUserPlaylists() ?: listOf()
         }
     }
 
-    fun previous() { playbackController.executeIfReady{ previous() }; pressedPrev = true }
-    fun next() { playbackController.executeIfReady{ next() } }
-    fun pause() { playbackController.executeIfReady { pause() } }
-    fun resume() { playbackController.executeIfReady { resume() } }
-    fun seekTo(position: Long) { playbackController.executeIfReady { seekTo(position) } }
-    fun playPause() { playbackController.executeIfReady { playPause() } }
-    fun play(uri: String) { playbackController.executeIfReady { play(uri) } }
+    fun previous() : CallResult<Empty>? {
+        pressedPrev = true; return remote.executeIfReady{ previous() }
+    }
+    fun next() : CallResult<Empty>? {
+        return remote.executeIfReady{ next() }
+    }
+    fun pause() : CallResult<Empty>? {
+        return remote.executeIfReady { pause() }
+    }
+    fun resume() : CallResult<Empty>? {
+        return remote.executeIfReady { resume() }
+    }
+    fun seekTo(position: Long) : CallResult<Empty>? {
+        return remote.executeIfReady { seekTo(position) }
+    }
+    fun playPause() : CallResult<Empty>? {
+        return remote.executeIfReady { playPause() }
+    }
+    fun play(uri: String) : CallResult<Empty>? { return remote?.play(uri) }
 
-    fun isPaused(): Boolean? { return playbackController?.state?.isPaused }
-    fun trackDuration(): Long? { return playbackController?.state?.track?.duration }
+    fun isPaused(): Boolean? { return remote?.state?.isPaused }
+    fun trackDuration(): Long? { return remote?.state?.track?.duration }
     fun subscribeToPlayerState(listener: (PlayerState) -> Unit) {
         this.playerVmSubscription = listener
     }
 
     fun disconnect() {
-        playbackController.executeIfReady { playbackController?.disconnect() }
+        if (playbackControllerReady) remote?.disconnect()
         tokenManager.stopTokenRefreshing()
     }
 
     private inline fun SpotifyPlaybackController?.executeIfReady(
-        action: SpotifyPlaybackController.() -> Unit
-    ) {
-        if (playbackControllerReady) this?.action() else toast(noConnectionMsg)
+        action: SpotifyPlaybackController.() -> CallResult<Empty>
+    ) : CallResult<Empty>? {
+        if (playbackControllerReady) return this?.action()
+        else {
+            toast(noConnectionMsg)
+            return null
+        }
     }
 
     private fun logDebug(message: String?) { message?.let { Log.d(tag, it) } }
