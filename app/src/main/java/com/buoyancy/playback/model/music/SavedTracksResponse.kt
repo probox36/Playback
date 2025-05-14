@@ -1,11 +1,11 @@
-package com.buoyancy.playback.model.music
+import com.buoyancy.playback.model.music.SavedTrack
 import com.google.gson.annotations.SerializedName
 
-class PlaylistResponse (
+class SavedTracksResponse (
     @SerializedName("limit") val limit: Int,
     @SerializedName("offset") val offset: Int,
     @SerializedName("total") val total: Int,
     @SerializedName("previous") val previousPage: String,
     @SerializedName("next") val nextPage: String,
-    @SerializedName("items") val playlists: List<Playlist>
+    @SerializedName("items") val tracks: List<SavedTrack>
 )

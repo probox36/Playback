@@ -8,6 +8,7 @@ import com.spotify.android.appremote.api.SpotifyAppRemote
 import com.spotify.protocol.client.CallResult
 import com.spotify.protocol.types.Empty
 import com.spotify.protocol.types.PlayerState
+import com.spotify.protocol.types.Repeat
 
 
 class SpotifyPlaybackController(
@@ -70,6 +71,16 @@ class SpotifyPlaybackController(
     override fun next() : CallResult<Empty> { return player.skipNext() }
     override fun previous() : CallResult<Empty> { return player.skipPrevious() }
     override fun play(uri: String) : CallResult<Empty> { return player.play(uri) }
+    fun setShuffle(enabled: Boolean): CallResult<Empty> { return player.setShuffle(enabled) }
+    fun toggleShuffle(): CallResult<Empty> { return if (state?.playbackOptions?.isShuffling == true)
+        setShuffle(false) else setShuffle(true)
+    }
+    fun setRepeat(enabled: Boolean): CallResult<Empty> {
+        return player.setRepeat( if (enabled) Repeat.ONE else Repeat.ALL )
+    }
+    fun toggleRepeat(): CallResult<Empty> { return if (state?.playbackOptions?.repeatMode == Repeat.ONE)
+        setRepeat(false) else setRepeat(true)
+    }
     fun disconnect() {
         stopMonitoringPlayback()
         SpotifyAppRemote.disconnect(remote)

@@ -9,4 +9,7 @@ interface MusicLibraryProvider {
     suspend fun getCurrent(): Track?
     suspend fun getNext(): Track?
     suspend fun getUserPlaylists(): List<Playlist?>
+    suspend fun getSavedTracks(): List<Track?>
+    suspend fun isTrackInSaved(id: String): Boolean?
+    suspend fun saveTrack(id: String)
 }

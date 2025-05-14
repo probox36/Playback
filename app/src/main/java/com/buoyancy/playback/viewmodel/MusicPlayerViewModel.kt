@@ -16,6 +16,7 @@ import com.buoyancy.playback.service.MusicService
 import com.buoyancy.playback.utils.StringUtils.Companion.formatDuration
 import com.spotify.protocol.types.PlayerState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -35,6 +36,12 @@ class MusicPlayerViewModel @Inject constructor(
     var playbackPosition = mutableDoubleStateOf(0.0)
     var yDrag = mutableFloatStateOf(0F)
     var seeking by mutableStateOf(false)
+    var prevTrackName by mutableStateOf("Пусто")
+    var nextTrackName by mutableStateOf("Пусто")
+    var isPlaying by mutableStateOf(false)
+    var inSaved by mutableStateOf(false)
+    var shuffleOn by mutableStateOf(false)
+    var repeatOn by mutableStateOf(false)
 
     // Private properties
     private var wasPaused = false
@@ -56,6 +63,12 @@ class MusicPlayerViewModel @Inject constructor(
             timePassed.longValue = state.playbackPosition
             playbackPosition.doubleValue = state.playbackPosition.toDouble() / duration.toDouble()
             timePassedStr.value = formatDuration(state.playbackPosition)
+            prevTrackName = musicService.getPrevTrack()?.name ?: "Пусто"
+            nextTrackName = musicService.getNextTrack()?.name ?: "Пусто"
+            isPlaying = musicService.isPaused() ?: false
+            shuffleOn = musicService.isShuffleOn() ?: false
+            repeatOn = musicService.isRepeatOn()
+            inSaved = musicService.currentTrackIsSaved
         }
     }
 

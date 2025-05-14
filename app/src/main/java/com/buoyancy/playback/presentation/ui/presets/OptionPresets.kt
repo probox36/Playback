@@ -23,11 +23,12 @@ class OptionPresets {
         }
 
         fun nowPlayingCallbacks(viewModel: MusicPlayerViewModel): List<() -> Unit> {
+            val musicService = viewModel.musicService
             return listOf(
                 { toast("Option Поделиться chosen!") },
-                { toast("Option Добавить в избранное chosen!") },
-                { toast("Option Повтор chosen!") },
-                { toast("Option Шафл chosen!") }
+                { musicService.saveCurrentTrack() },
+                { musicService.toggleRepeat() },
+                { musicService.toggleShuffle() }
             )
         }
     }

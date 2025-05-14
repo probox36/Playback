@@ -15,5 +15,10 @@ class StringUtils {
 
             return String.format("%02d:%02d", minutes, seconds)
         }
+
+        fun trimUri(uri: String): String {
+            val index = uri.lastIndexOf(":")
+            return if (index == -1) uri else uri.substring(index+1, uri.length)
+        }
     }
 }

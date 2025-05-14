@@ -18,6 +18,7 @@ import com.spotify.android.appremote.api.SpotifyAppRemote
 import com.spotify.protocol.client.CallResult
 import com.spotify.protocol.types.Empty
 import com.spotify.protocol.types.PlayerState
+import com.spotify.protocol.types.Repeat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +29,7 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.TimeoutException
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.buoyancy.playback.utils.StringUtils.Companion.trimUri
 
 @Singleton
 open class MusicService @Inject constructor(
@@ -44,6 +46,8 @@ open class MusicService @Inject constructor(
 
     var currentTrackUri by mutableStateOf("")
         private set
+    var currentTrackIsSaved by mutableStateOf(false)
+        private set
     var queue: MutableState<List<Track?>> = mutableStateOf(listOf())
         private set
     var playlists: MutableState<List<Playlist>> = mutableStateOf(listOf())
@@ -51,7 +55,7 @@ open class MusicService @Inject constructor(
 
     // Spotify api wrappers
     var webApi: SpotifyWebApi ? = null
-    var remote: SpotifyPlaybackController ? = null
+    var playbackController: SpotifyPlaybackController ? = null
     var webApiReady = false
     var playbackControllerReady = false
 
@@ -64,7 +68,7 @@ open class MusicService @Inject constructor(
     private fun setupAppRemoteSubscription() {
         appRemoteManager.subscribeForAppRemote(object : ConnectionListener {
             override fun onConnected(remoteArg: SpotifyAppRemote) {
-                remote = SpotifyPlaybackController(remoteArg).apply {
+                playbackController = SpotifyPlaybackController(remoteArg).apply {
                     subscribeToPlayerState{ playerVmSubscription(it) }
                     subscribeToPlayerState { processPlayerState(it) }
                 }
@@ -98,23 +102,36 @@ open class MusicService @Inject constructor(
 
     private fun processPlayerState(state: PlayerState) {
         if (state.track.uri != currentTrackUri) {
-            if (!pressedPrev && !queueUpdated && currentTrackUri != "") appendQueue()
+            if (!pressedPrev && !queueUpdated && currentTrackUri != "") {
+                if (isRepeatOn()) toggleRepeat()
+                appendQueue()
+            }
             else { pressedPrev = false; queueUpdated = false }
             currentTrackUri = state.track.uri
+            coroutineScope.launch { currentTrackIsSaved = isInFavourites().await() }
         }
     }
 
-    // Single get request is not guaranteed to give you a fresh queue. Web API's kinda slow
-    fun getQueue(): Deferred<List<Track?>> = coroutineScope.async {
-        repeat(6) { attempt ->
-            logDebug("${attempt+1} attempt to get queue...")
-            val newQueue = webApi?.getQueue() ?: listOf() // will sometimes throw SpotifyWebApiExc
-            if (newQueue.isNotEmpty() && newQueue != queue.value) {
-                return@async newQueue
-            }
-            delay(500 * (attempt + 1L))
-        }
-        throw TimeoutException("Failed to get new queue after 6 attempts")
+    fun getCurrentTrackIndex(): Int {
+        return queue.value.indexOfFirst { it?.uri == currentTrackUri }
+    }
+    fun getTrack(index: Int): Track? {
+        return if (queue.value.isNotEmpty() && index != -1) {
+            queue.value[index]
+        } else null
+    }
+    fun getCurrentTrack(): Track? {
+        return getTrack(getCurrentTrackIndex())
+    }
+    fun getNextTrack(): Track? {
+        val index = getCurrentTrackIndex()
+        return if (index != -1) getTrack(index + 1)
+        else null
+    }
+    fun getPrevTrack(): Track? {
+        val index = getCurrentTrackIndex()
+        return if (index != -1) getTrack(index - 1)
+        else null
     }
 
     fun updateQueue() {
@@ -130,10 +147,23 @@ open class MusicService @Inject constructor(
         queueUpdated = true
     }
 
+    // Single get request is not guaranteed to give you a fresh queue. Web API's kinda slow
+    fun getQueue(): Deferred<List<Track?>> = coroutineScope.async {
+        repeat(6) { attempt ->
+            logDebug("${attempt+1} attempt to get queue...")
+            val newQueue = webApi?.getQueue() ?: listOf() // will sometimes throw SpotifyWebApiExc
+            if (newQueue.isNotEmpty() && newQueue != queue.value) {
+                return@async newQueue
+            }
+            delay(500 * (attempt + 1L))
+        }
+        throw TimeoutException("Failed to get new queue after 6 attempts")
+    }
+
     private fun appendQueue() {
         coroutineScope.launch {
-            logDebug("appendQueue called!")
-            var newQueue: List<Track?>
+            logDebug("appendQueue called")
+            val newQueue: List<Track?>
             try {
                 newQueue = getQueue().await()
             } catch (e: Exception) {
@@ -164,34 +194,57 @@ open class MusicService @Inject constructor(
         }
     }
 
+    fun saveCurrentTrack() {
+        coroutineScope.launch {
+            webApi?.saveTrack(trimUri(currentTrackUri))
+            currentTrackIsSaved = true
+        }
+    }
+
     fun previous() : CallResult<Empty>? {
-        pressedPrev = true; return remote.executeIfReady{ previous() }
+        pressedPrev = true; return playbackController.executeIfReady{ previous() }
     }
     fun next() : CallResult<Empty>? {
-        return remote.executeIfReady{ next() }
+        return playbackController.executeIfReady{ next() }
     }
     fun pause() : CallResult<Empty>? {
-        return remote.executeIfReady { pause() }
+        return playbackController.executeIfReady { pause() }
     }
     fun resume() : CallResult<Empty>? {
-        return remote.executeIfReady { resume() }
+        return playbackController.executeIfReady { resume() }
     }
     fun seekTo(position: Long) : CallResult<Empty>? {
-        return remote.executeIfReady { seekTo(position) }
+        return playbackController.executeIfReady { seekTo(position) }
     }
     fun playPause() : CallResult<Empty>? {
-        return remote.executeIfReady { playPause() }
+        return playbackController.executeIfReady { playPause() }
     }
-    fun play(uri: String) : CallResult<Empty>? { return remote?.play(uri) }
+    fun toggleRepeat() : CallResult<Empty>? {
+        return playbackController.executeIfReady { toggleRepeat() }
+    }
+    fun toggleShuffle() : CallResult<Empty>? {
+        logDebug("Toggle shuffle called")
+        val result = playbackController.executeIfReady { toggleShuffle() }
+        updateQueue()
+        return result
+    }
 
-    fun isPaused(): Boolean? { return remote?.state?.isPaused }
-    fun trackDuration(): Long? { return remote?.state?.track?.duration }
+    fun play(uri: String) : CallResult<Empty>? { return playbackController?.play(uri) }
+
+    fun isPaused(): Boolean? { return playbackController?.state?.isPaused }
+    fun isShuffleOn(): Boolean? { return playbackController?.state?.playbackOptions?.isShuffling }
+    fun isRepeatOn(): Boolean { return playbackController?.state?.playbackOptions?.repeatMode == Repeat.ONE }
+    fun isInFavourites(): Deferred<Boolean> = coroutineScope.async {
+        logDebug("Current track uri = ${trimUri(currentTrackUri)}")
+        webApi?.isTrackInSaved(trimUri(currentTrackUri)) ?: false
+    }
+    fun trackDuration(): Long? { return playbackController?.state?.track?.duration }
     fun subscribeToPlayerState(listener: (PlayerState) -> Unit) {
         this.playerVmSubscription = listener
     }
 
     fun disconnect() {
-        if (playbackControllerReady) remote?.disconnect()
+        if (playbackControllerReady) playbackController?.disconnect()
         tokenManager.stopTokenRefreshing()
     }
 

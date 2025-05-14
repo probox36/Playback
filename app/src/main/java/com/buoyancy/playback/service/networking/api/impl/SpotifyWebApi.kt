@@ -1,5 +1,6 @@
 package com.buoyancy.playback.service.networking.api.impl
 
+import SavedTracksResponse
 import android.util.Log
 import com.buoyancy.playback.model.exceptions.SpotifyApiException
 import com.buoyancy.playback.model.music.Playlist
@@ -47,6 +48,13 @@ class SpotifyWebApi(
         )
     }
 
+    suspend fun getSavedTracksRaw(): SavedTracksResponse? {
+        return makeRequest(
+            { apiClient.service.getSavedTracks(20, 0) },
+            "Saved tracks request failed"
+        )
+    }
+
     override suspend fun getUserPlaylists(): List<Playlist> {
         return getUserPlaylistsRaw()?.playlists ?: emptyList()
     }
@@ -68,6 +76,25 @@ class SpotifyWebApi(
 
     override suspend fun getNext(): Track? {
         return getQueueRaw()?.queue?.first()
+    }
+
+    override suspend fun isTrackInSaved(id: String): Boolean? {
+        val inSaved = makeRequest(
+            { apiClient.service.getIfTracksInSaved(listOf(id)) },
+            "Saved tracks request failed"
+        )
+        return if (!inSaved.isNullOrEmpty()) { inSaved[0] } else false
+    }
+
+    override suspend fun getSavedTracks(): List<Track?> {
+        return getSavedTracksRaw()?.tracks?.map{ it.track } ?: listOf()
+    }
+
+    override suspend fun saveTrack(id: String) {
+        makeRequest(
+            { apiClient.service.saveTracks(listOf(id)) },
+            "Save track request failed"
+        )
     }
 
     private fun handleErrorResponse(response: Response<*>): Nothing {
