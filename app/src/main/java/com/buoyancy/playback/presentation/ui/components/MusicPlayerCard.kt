@@ -41,16 +41,16 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.buoyancy.playback.R
 import com.buoyancy.playback.model.music.Track
+import com.buoyancy.playback.presentation.ui.color.ColorProvider
+import com.buoyancy.playback.utils.ImgUtils.pickCover
 import com.buoyancy.playback.utils.StringUtils.Companion.formatDuration
 import com.buoyancy.playback.viewmodel.MusicPlayerViewModel
-import com.buoyancy.playback.utils.ImgUtils.pickCover
 
-val lightThemeColor = Color(0xFFF0E1DE)
 const val trackNameFontWeight = 500
 const val artistNameFontWeight = 550
 val trackNameFontSize = 20.sp
 val artistNameFontSize = 16.sp
-private val preferredCoverSize = 300 * 300
+private val preferredCoverSize = 500 * 500
 
 @Composable
 fun MusicPlayerCard(
@@ -64,6 +64,24 @@ fun MusicPlayerCard(
     val queue: MutableState<List<Track?>> = viewModel.musicService.queue
     val track: Track? = if (queue.value.size > trackInd) queue.value[trackInd] else null
     val coverUri = track?.album?.images?.let { pickCover(it, preferredCoverSize) }
+//    var cardColor: MutableState<Color?> = remember { mutableStateOf(null) }
+//    val context = LocalContext.current
+//
+//    LaunchedEffect(isVisible.value) {
+//        Log.d("MusicPlayerCard", "Track ${track?.name} visibility changed to ${isVisible.value}")
+//        if(isVisible.value && coverUri != null) {
+//            cardColor.value = getDominantColorByUrl(context, coverUri)
+//            Log.d("MusicPlayerCard", "Set track ${track?.name} card color to ${cardColor.value}")
+//        }
+//    }
+//
+//    LaunchedEffect(isActive.value) {
+//        Log.d("MusicPlayerCard", "Track ${track?.name} activity changed to ${isActive.value}\nCard color is ${cardColor.value}")
+//        if(isActive.value && cardColor.value != null) {
+//            Log.d("MusicPlayerCard", "Track ${track?.name} is active. Trying to update colors to ${cardColor.value}")
+//            ColorProvider.updateColors(cardColor.value!!)
+//        }
+//    }
 
     BoxWithConstraints(
         contentAlignment = Alignment.Center,
@@ -106,9 +124,9 @@ fun MusicPlayerCard(
                     model = coverUri,
                     contentDescription = "Album cover",
                     modifier = Modifier
-                        .size(contentWidth)
+                        .size(contentWidth + 10.dp)
                         .clip(RoundedCornerShape(30.dp)),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
                 )
 
                 Spacer(Modifier.height(16.dp))
@@ -137,6 +155,8 @@ fun MusicPlayerCard(
 @Composable
 private fun TrackInfo(track: Track?, width: Dp = 300.dp) {
 
+    val lightColor = ColorProvider.lightColor.value
+
     val unboundedFont = FontFamily(
         Font(
             R.font.unbounded_variable,
@@ -161,7 +181,7 @@ private fun TrackInfo(track: Track?, width: Dp = 300.dp) {
             maxLines = 1,
             fontFamily = unboundedFont,
             fontSize = trackNameFontSize,
-            color = lightThemeColor,
+            color = lightColor,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.width(width)
         )
@@ -175,7 +195,7 @@ private fun TrackInfo(track: Track?, width: Dp = 300.dp) {
             maxLines = 1,
             fontFamily = manropeFont,
             fontSize = artistNameFontSize,
-            color = lightThemeColor,
+            color = lightColor,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.width(width)
         )

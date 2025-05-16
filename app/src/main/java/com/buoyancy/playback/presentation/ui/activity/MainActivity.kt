@@ -7,7 +7,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import com.buoyancy.playback.presentation.ui.screens.MainScreen
-import com.buoyancy.playback.presentation.ui.theme.PlaybackTheme
 import com.buoyancy.playback.service.networking.auth.TokenManager
 import com.buoyancy.playback.utils.ToastUtils
 import com.buoyancy.playback.viewmodel.LibraryViewModel
@@ -33,11 +32,7 @@ class MainActivity : ComponentActivity() {
         tokenManager.setActivity(this)
         tokenManager.requestToken()
 
-        setContent {
-            PlaybackTheme {
-                MainScreen(playerViewModel, libraryViewModel)
-            }
-        }
+        setContent { MainScreen(playerViewModel, libraryViewModel) }
     }
 
     override fun onDestroy() {

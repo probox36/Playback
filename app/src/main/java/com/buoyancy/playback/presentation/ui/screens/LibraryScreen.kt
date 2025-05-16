@@ -25,7 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
@@ -44,8 +43,8 @@ import com.buoyancy.playback.R
 import com.buoyancy.playback.model.GestureEvent
 import com.buoyancy.playback.presentation.ui.components.PlaylistCard
 import com.buoyancy.playback.presentation.ui.components.trackNameFontWeight
+import com.buoyancy.playback.presentation.ui.color.ColorProvider
 import com.buoyancy.playback.viewmodel.LibraryViewModel
-import kotlinx.coroutines.delay
 import android.view.HapticFeedbackConstants as haptics
 
 @OptIn(ExperimentalTextApi::class)
@@ -57,11 +56,11 @@ fun LibraryScreen(
     val playlists = viewModel.playlists
     val pagerState = rememberPagerState(initialPage = 3) { playlists.value.size }
     val lifecycleOwner = LocalLifecycleOwner.current
-    val backgroundColor = Color(0xFF702A24)
+    val backgroundColor = ColorProvider.primaryColor.value
+    val lightColor = ColorProvider.lightColor.value
     val density = LocalDensity.current
     val view = LocalView.current
     val statusBarHeight = with(density) { WindowInsets.statusBars.getTop(density).toDp() }
-    val lightColor = Color(0xFFF0E1DE)
 
     LaunchedEffect(viewModel, lifecycleOwner) {
         viewModel.gestureEvents

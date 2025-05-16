@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
 import com.buoyancy.playback.R
+import com.buoyancy.playback.presentation.ui.color.ColorProvider
 
 @OptIn(ExperimentalTextApi::class)
 @Composable
@@ -59,9 +60,9 @@ fun ProgressBar(
     val cornerRadius = axisHeight / 2
 
     // Цвета
-    val axisColor = Color(0xFF702A24)
-    val middleLayerColor = Color(0xFF4C1D19)
-    val trackColor = Color(0xFFF0E1DE)
+    val axisColor = ColorProvider.primaryColor.value
+    val middleLayerColor = ColorProvider.darkColor.value
+    val trackColor = ColorProvider.lightColor.value
 
     // Размеры
     val availableWidth = columnWidth - 2 * totalPadding

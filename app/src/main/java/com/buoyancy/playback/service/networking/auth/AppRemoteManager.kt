@@ -10,7 +10,9 @@ import com.spotify.android.appremote.api.SpotifyAppRemote
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import com.buoyancy.playback.utils.ToastUtils.toast
+import javax.inject.Singleton
 
+@Singleton
 class AppRemoteManager @Inject constructor(
     @ApplicationContext private val context: Context) {
 

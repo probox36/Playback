@@ -82,6 +82,7 @@ dependencies {
     implementation(libs.hilt.android)
     implementation(libs.coil.kt.coil.compose)
     implementation(libs.coil)
+    implementation(libs.androidx.palette)
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.retrofit)
     implementation(libs.converter.gson)

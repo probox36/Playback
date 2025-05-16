@@ -17,7 +17,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
@@ -30,6 +29,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.buoyancy.playback.R
+import com.buoyancy.playback.presentation.ui.color.ColorProvider
 
 @OptIn(ExperimentalTextApi::class)
 @Composable
@@ -42,8 +42,8 @@ fun Option(
     baseWidth: Dp = 350.dp
 ) {
     // Цвета
-    val contentColor = Color(0xFF4C1D19)
-    val backgroundColor = Color(0xFFF0E1DE)
+    val contentColor = ColorProvider.darkColor.value
+    val backgroundColor = ColorProvider.lightColor.value
 
     // Размеры
     val expandedWidthOffset = 40.dp

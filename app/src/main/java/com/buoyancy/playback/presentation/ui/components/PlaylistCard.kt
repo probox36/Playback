@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,7 +24,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -39,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.buoyancy.playback.R
 import com.buoyancy.playback.model.music.Playlist
+import com.buoyancy.playback.presentation.ui.color.ColorProvider
 import com.buoyancy.playback.utils.ImgUtils.pickCover
 
 @OptIn(ExperimentalTextApi::class)
@@ -48,10 +47,10 @@ fun PlaylistCard(
     isActive: Boolean
 ) {
     // Constants
-    val lightColor = Color(0xFFF0E1DE)
-    val darkColor = Color(0xFF4C1D19)
+    val lightColor = ColorProvider.lightColor.value
+    val darkColor = ColorProvider.darkColor.value
     val targetWidth = LocalConfiguration.current.screenWidthDp.dp - 20.dp
-    val imageSize = 200 * 200
+    val imageSize = 300 * 300
 
     // Animations
     val animatedAlpha by animateFloatAsState(

@@ -23,7 +23,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
@@ -33,6 +32,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
 import com.buoyancy.playback.model.GestureEvent
 import com.buoyancy.playback.model.OptionComponentState
+import com.buoyancy.playback.presentation.ui.color.ColorProvider
 import com.buoyancy.playback.viewmodel.MusicPlayerViewModel
 import kotlin.math.roundToInt
 import android.view.HapticFeedbackConstants as haptics
@@ -47,7 +47,7 @@ fun Options(
     val spacerHeight = 8.dp
     val optionHeight = 55.dp
     val step = optionHeight + spacerHeight
-    val backgroundColor = Color(0xFF4C1D19)
+    val backgroundColor = ColorProvider.darkColor.value
 
     // State and derived values
     val rOptions = remember { options }

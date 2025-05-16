@@ -1,5 +1,6 @@
 package com.buoyancy.playback.service
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -8,6 +9,7 @@ import androidx.compose.runtime.setValue
 import com.buoyancy.playback.model.TokenSubscription
 import com.buoyancy.playback.model.music.Playlist
 import com.buoyancy.playback.model.music.Track
+import com.buoyancy.playback.presentation.ui.color.ColorProvider
 import com.buoyancy.playback.service.networking.api.impl.SpotifyPlaybackController
 import com.buoyancy.playback.service.networking.api.impl.SpotifyWebApi
 import com.buoyancy.playback.service.networking.auth.AppRemoteManager
@@ -30,9 +32,12 @@ import java.util.concurrent.TimeoutException
 import javax.inject.Inject
 import javax.inject.Singleton
 import com.buoyancy.playback.utils.StringUtils.Companion.trimUri
+import com.buoyancy.playback.utils.ImgUtils.getDominantColorByUrl
+import dagger.hilt.android.qualifiers.ApplicationContext
 
 @Singleton
 open class MusicService @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val appRemoteManager: AppRemoteManager,
     private val tokenManager: TokenManager
 ) {
@@ -108,7 +113,11 @@ open class MusicService @Inject constructor(
             }
             else { pressedPrev = false; queueUpdated = false }
             currentTrackUri = state.track.uri
-            coroutineScope.launch { currentTrackIsSaved = isInFavourites().await() }
+            coroutineScope.launch {
+                val trackId = state.track.imageUri.raw
+                trackId?.let { updateColor(it) }
+                currentTrackIsSaved = isInFavourites().await()
+            }
         }
     }
 
@@ -152,6 +161,7 @@ open class MusicService @Inject constructor(
         repeat(6) { attempt ->
             logDebug("${attempt+1} attempt to get queue...")
             val newQueue = webApi?.getQueue()?.filterNotNull() ?: listOf() // will sometimes throw SpotifyWebApiExc
+            logDebug("Received new queue: $newQueue")
             if (newQueue.isNotEmpty() && newQueue != queue.value) {
                 return@async newQueue
             }
@@ -205,6 +215,11 @@ open class MusicService @Inject constructor(
             webApi?.saveTrack(trimUri(currentTrackUri))
             currentTrackIsSaved = true
         }
+    }
+
+    suspend fun updateColor(trackId: String) {
+        val newColor = getDominantColorByUrl(context, "https://i.scdn.co/image/" + trimUri(trackId))
+        if (newColor != null) ColorProvider.updateColors(newColor)
     }
 
     fun previous() : CallResult<Empty>? {

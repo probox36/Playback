@@ -12,13 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Repeat
-import androidx.compose.material.icons.filled.Shuffle
-import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,11 +40,8 @@ import com.buoyancy.playback.presentation.ui.components.MusicPlayerCard
 import com.buoyancy.playback.presentation.ui.components.Options
 import com.buoyancy.playback.presentation.ui.presets.IndicatorPresets
 import com.buoyancy.playback.presentation.ui.presets.OptionPresets
+import com.buoyancy.playback.presentation.ui.color.ColorProvider
 import com.buoyancy.playback.viewmodel.MusicPlayerViewModel
-
-val backgroundColor = Color(0xFF702A24)
-val darkColor = Color(0xFF4C1D19)
-val lightColor = Color(0xFFF0E1DE)
 
 @Composable
 fun NowPlayingScreen(
@@ -68,6 +58,8 @@ fun NowPlayingScreen(
 
     var isProgrammaticScroll by remember { mutableStateOf(false) }
     var previousPage by remember { mutableIntStateOf(pagerState.settledPage) }
+
+    val backgroundColor = ColorProvider.primaryColor.value
 
     LaunchedEffect(pagerState.settledPage) {
         if (!isProgrammaticScroll) {
@@ -176,6 +168,7 @@ val manropeFont = FontFamily(
 
 @Composable
 fun Indicator(state: IndicatorComponentState) {
+    val lightColor = ColorProvider.lightColor.value
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier.size(40.dp))
