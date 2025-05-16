@@ -151,7 +151,7 @@ open class MusicService @Inject constructor(
     fun getQueue(): Deferred<List<Track?>> = coroutineScope.async {
         repeat(6) { attempt ->
             logDebug("${attempt+1} attempt to get queue...")
-            val newQueue = webApi?.getQueue() ?: listOf() // will sometimes throw SpotifyWebApiExc
+            val newQueue = webApi?.getQueue()?.filterNotNull() ?: listOf() // will sometimes throw SpotifyWebApiExc
             if (newQueue.isNotEmpty() && newQueue != queue.value) {
                 return@async newQueue
             }
@@ -173,15 +173,21 @@ open class MusicService @Inject constructor(
             }
 
             if (currentTrackUri != "" && newQueue.isNotEmpty()) {
-                val currentIndex = queue.value.indexOfFirst { it?.uri == currentTrackUri }
-                if (currentIndex != -1) {
-                    val updatedQueue = queue.value.toMutableList().apply {
-                        subList(currentIndex, size).clear()
-                        addAll(newQueue.filterNotNull())
+
+                val lastIndexInQueue = queue.value.indexOfLast { it?.uri == currentTrackUri }
+                val firstIndexInNewQueue = newQueue.indexOfFirst { it?.uri == currentTrackUri }
+
+                when {
+                    lastIndexInQueue != -1 && firstIndexInNewQueue != -1 -> {
+                        val updatedQueue = queue.value.toMutableList().apply {
+                            subList(lastIndexInQueue + 1, size).clear()
+                            addAll(newQueue.subList(firstIndexInNewQueue + 1, newQueue.size))
+                        }
+                        queue.value = updatedQueue
+                        return@launch
                     }
-                    queue.value = updatedQueue
-                    return@launch
-                } else updateQueue()
+                    else -> { updateQueue() }
+                }
             } else {
                 logDebug("Something went wrong with appending the queue")
             }
@@ -225,7 +231,7 @@ open class MusicService @Inject constructor(
     fun toggleShuffle() : CallResult<Empty>? {
         logDebug("Toggle shuffle called")
         val result = playbackController.executeIfReady { toggleShuffle() }
-        updateQueue()
+            ?.setResultCallback { updateQueue() }
         return result
     }
 
